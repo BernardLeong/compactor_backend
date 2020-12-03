@@ -16,6 +16,31 @@ class Alarm{
         this.alarmInfoTable = 'AlarmInfo'
     }
 
+    clearAlarm(compactorID){
+        var docClient = this.docClient
+        var status = 'Clear'
+        var params = {
+            TableName: this.alarmInfoTable,
+            Key:{
+                "compactorID" : compactorID
+            },
+            UpdateExpression: "set alarmStatus = :alarmStatus",
+            ExpressionAttributeValues:{
+                ":alarmStatus": status
+            },
+            ReturnValues:"UPDATED_NEW"
+        };
+        return new Promise((resolve, reject)=>{
+            docClient.update(params, (err, data)=>{
+                if (err) {
+                    reject("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                } else {
+                    resolve(data);
+                }
+            });
+        })
+    }
+
     getAlarm(compactorID){
         var docClient = this.docClient
         var params = {
@@ -143,5 +168,11 @@ class Alarm{
         }
     }
 }
+
+var alarm = new Alarm
+var clearAlarm = alarm.clearAlarm('CP0001')
+clearAlarm.then((result)=>{
+    console.log(result)
+})
 
 module.exports = Alarm

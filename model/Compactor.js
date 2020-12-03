@@ -75,6 +75,30 @@ class Compactor{
             }
         });
     }
+
+    clearAlarmRaised(compactorID){
+        var docClient = this.docClient
+        var params = {
+            TableName: this.compactInfo,
+            Key:{
+                "compactorID" : compactorID
+            },
+            UpdateExpression: "set alarmRaised = :alarmRaised",
+            ExpressionAttributeValues:{
+                ":alarmRaised": false
+            },
+            ReturnValues:"UPDATED_NEW"
+        };
+        return new Promise((resolve, reject)=>{
+            docClient.update(params, (err, data)=>{
+                if (err) {
+                    reject("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                } else {
+                    resolve(data);
+                }
+            });
+        })
+    }
     
     addMachine(compactorID, compactorDetails){
         var tableName = this.compactInfo
@@ -165,5 +189,6 @@ class Compactor{
         }) 
     }
 }
-
+let compactor = new Compactor
+compactor.clearAlarmRaised('CP0001')
 module.exports = Compactor

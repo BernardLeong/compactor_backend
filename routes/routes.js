@@ -48,8 +48,8 @@ const Login = (app) => {
                 }
             )
         }
-
     })
+
     app.post('/editUser',async(req, res)=>{
         //can only edit self
         //get userid
@@ -88,19 +88,14 @@ const Login = (app) => {
                 }
             )
         }
-        
-        //get userid
-        //edit with the userid
     })
+
     app.post('/registerUser',(req, res)=>{
         if(req.body.username && req.body.password){
             //save username and password
             var username = req.body.username
             var password = req.body.password
             var type = req.body.type || 'user'
-            console.log(type)
-            console.log(username)
-            console.log(password)
 
             let user = new User
             let saveNewUser = user.saveNewUser(username, password, type)
@@ -274,6 +269,61 @@ const AlarmRoutes = (app) =>{
                         }
                     )
                 })
+            }
+        }
+    })
+
+    app.post('/clearAlarm',async(req, res)=>{
+         //can be raised by enginner and admin
+         var type = 'user'
+         if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
+             type = 'admin'
+         }
+ 
+         if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
+             type = 'serviceUser'
+         }
+
+         if(type == 'user'){
+             res.json({
+                 'success' : false,
+                 'error' : 'Normal User Cannot Perform This Action'
+             })
+         }
+         var accesstoken = null
+         //ask for 
+         if(req.headers.authorization){
+             var token = req.headers.authorization.split(' ')
+             if(token[0] == 'Bearer'){
+                 accesstoken = token[1]
+             }else{
+                 res.json({
+                     'success' : false,
+                     'error' : 'Please use bearer token to log in'
+                 })
+             }
+         }
+ 
+         if(accesstoken){
+             if(req.body.compactorID){
+                let alarm = new Alarm
+                let compactor = new Compactor
+                alarm.clearAlarm(req.body.compactorID)
+                compactor.clearAlarmRaised(req.body.compactorID)
+                
+                res.json(
+                    {
+                        'success' : true,
+                        'message' : 'Alarm cleared successfully'
+                    }
+                )
+            }else{
+                res.json(
+                    {
+                        'success' : false,
+                        'error' : 'Please provide compactorID'
+                    }
+                )
             }
         }
     })
@@ -720,6 +770,7 @@ const CompactorRoutes = (app) =>{
         if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
             type = 'serviceUser'
         }
+
         if(type == 'serviceUser'){
             res.json({
                 'success' : false,
