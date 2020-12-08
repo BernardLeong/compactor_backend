@@ -189,6 +189,5 @@ class Compactor{
         }) 
     }
 }
-let compactor = new Compactor
-compactor.clearAlarmRaised('CP0001')
+
 module.exports = Compactor

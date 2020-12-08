@@ -14,15 +14,16 @@ class Alarm{
         this.compactInfoTable = 'CompactorInfo'
         this.alarmTable = alarmTable
         this.alarmInfoTable = 'AlarmInfo'
+        this.lastID = 'lastID'
     }
 
-    clearAlarm(compactorID){
+    clearAlarm(alarmID){
         var docClient = this.docClient
         var status = 'Clear'
         var params = {
             TableName: this.alarmInfoTable,
             Key:{
-                "compactorID" : compactorID
+                "AlarmID" : alarmID
             },
             UpdateExpression: "set alarmStatus = :alarmStatus",
             ExpressionAttributeValues:{
@@ -43,18 +44,25 @@ class Alarm{
 
     getAlarm(compactorID){
         var docClient = this.docClient
+
         var params = {
             TableName: this.alarmInfoTable,
-            Key:{ 
-                "compactorID" : compactorID
+            Select: "ALL_ATTRIBUTES",
+            FilterExpression: "#compactorID = :compactorID",
+            ExpressionAttributeNames: {
+                "#compactorID": "compactorID"
+            },
+            ExpressionAttributeValues: {
+                 ":compactorID": compactorID,
             }
         };
+
         return new Promise((resolve, reject)=>{
-            docClient.get(params, (err, data)=>{
+            docClient.scan(params, (err, data)=>{
                 if (err) {
                     reject("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
                 } else {
-                    resolve(data)
+                    resolve(data.Items)
                 }
             }) 
         })
@@ -80,12 +88,56 @@ class Alarm{
         });
     }
 
-    createAlarm(compactorID, alarmDetails){
+    getPrefixedAlarmID(){
+        var docClient = this.docClient
+        var params = {
+            TableName: this.lastID,
+            Key:{
+                "table" : this.alarmInfoTable
+            }
+        };
+        return new Promise((resolve, reject)=>{
+            docClient.get(params, (err, data)=>{
+                if (err) {
+                    reject(err)
+                } else {
+                    // resolve(data)
+                    var lastid = data.Item.lastid
+                    var prefix = 'AL'
+                    var alarmid = ''
+                    switch(true) {
+                        case lastid <= 9999 && lastid >= 1000:
+                          //must be 0001
+                            alarmid = `${prefix}${lastid}`
+                        break;
+                        case lastid <= 999 && lastid >= 100:
+                          //must be 0001
+                            alarmid = `${prefix}0${lastid}`
+                        break;
+                        case lastid <= 99 && lastid >= 10:
+                            alarmid = `${prefix}00${lastid}`
+                        break;
+                        case lastid <= 10:
+                            alarmid = `${prefix}000${lastid}`
+                        break;
+                        default :
+                            alarmid = `${prefix}${lastid}`
+                    }
+                    resolve({prefix: alarmid, lastid: lastid})
+                }
+            });
+        })
+    }
+
+    async createAlarm(compactorID, alarmDetails){
         var docClient = this.docClient
         var { type, status, userid, address } = alarmDetails
+        var { prefix, lastid } = await this.getPrefixedAlarmID()
+
         var params = {
             TableName: this.alarmInfoTable,
             Item:{
+                "AlarmID" : prefix,
                 "compactorID": compactorID,
                 "timeStamp" : Date.now(),
                 "status" : status,
@@ -100,6 +152,31 @@ class Alarm{
                 console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
             } else {
                 console.log("Added items:", JSON.stringify(data, null, 2));
+            }
+        });
+
+        this.updateAlarmInfoLastID(lastid)
+    }
+
+    updateAlarmInfoLastID(lastid){
+        var docClient = this.docClient
+        var newLastID = lastid + 1
+        var params = {
+            TableName: this.lastID,
+            Key:{
+                "table" : this.alarmInfoTable
+            },
+            UpdateExpression: "set lastid = :lastid",
+            ExpressionAttributeValues:{
+                ':lastid' : newLastID,
+            },
+            ReturnValues:"UPDATED_NEW"
+        };
+        docClient.update(params, (err, data)=>{
+            if (err) {
+                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+            } else {
+                console.log("Added item:", JSON.stringify(data, null, 2));
             }
         });
     }
@@ -131,48 +208,18 @@ class Alarm{
         });
     }
 
-    updateAlarmInfo(compactorID, alarmDetails){
-        var docClient = this.docClient
-        var timestamp = Date.now()
-        var { type , status } = alarmDetails
-        var params = {
-            TableName: this.alarmInfoTable,
-            Item:{
-                "compactorID" : compactorID,
-                "timestamp" : timestamp,
-                "humanReadableTS" : moment().format('LLLL'),
-                "type" : type,
-                "status" : status
-            }
-        };
-        docClient.put(params, (err, data)=>{
-            if (err) {
-                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
-            } else {
-                console.log("Added item:", JSON.stringify(data, null, 2));
-            }
-        });
-    }
-
     raisedAlarm(compactorID,alarmDetails){
-
-        let docClient = this.docClient
         if(compactorID){
             //if alarm is raised create record
             this.createAlarm(compactorID,alarmDetails)
             //find record in CompactorInfo table and update the alarm fields
             this.updateCompactorInfoAlarm(compactorID,alarmDetails)
-            this.updateAlarmInfo(compactorID, alarmDetails)
         }else{
             return;
         }
     }
 }
 
-var alarm = new Alarm
-var clearAlarm = alarm.clearAlarm('CP0001')
-clearAlarm.then((result)=>{
-    console.log(result)
-})
-
+let alarm = new Alarm
+alarm.clearAlarm('AL0003')
 module.exports = Alarm

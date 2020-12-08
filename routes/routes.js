@@ -117,13 +117,10 @@ const Login = (app) => {
     app.post('/loginUser',(req, res)=>{
         if(req.body.username && req.body.password){
             let auth = new Authetication
-            let user = new User
             let type = req.body.type
             let username = req.body.username
             let password = req.body.password
 
-            let dynamicTable = user.getdynamicTable(type)
-            var { tableName, userid } = dynamicTable
             auth.autheticate(username, password, type).then((result)=>{
                 res.json(result)
             }).catch((err)=>{
@@ -135,9 +132,49 @@ const Login = (app) => {
             })
         }
     })
+
+    app.post('/logout',(req, res)=>{
+        if(req.body.token){
+
+            let token = req.body.token
+            let type = req.body.type
+            //search token whether is a valid token
+            let auth = new Authetication
+            auth.checkToken(token, type).then((count)=>{
+                if(count >= 1){
+                    //invalid token
+                    auth.invalidateToken(token)
+                    res.json({
+                        'success' : true,
+                        'message' : 'User sucessfully logged out'
+                    })
+                }
+            }).catch((err=>{
+                res.json({
+                    'success' : false,
+                    'error' : err
+                })
+            }))
+        }
+    })
 }
 
 const AlarmRoutes = (app) =>{
+    app.get('/getDetailAlarm',async(req, res)=>{
+        let alarm = new Alarm
+        let compactor = new Compactor
+        var allAlarm = await alarm.getAllAlarm()
+        allAlarm = allAlarm.Items
+        for(i=0;i<allAlarm.length;i++){
+            var compactorDetails = await compactor.getCompactorInfo(allAlarm[i].compactorID)
+            allAlarm[i]['sectionArea'] = compactorDetails.Item.sectionArea
+        }
+
+        res.json({
+            'alarmInfo' : allAlarm
+        })
+    })
+
     app.get('/getTodaysAlarm/:section',async(req, res)=>{
         var type = 'user'
         if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
@@ -273,6 +310,7 @@ const AlarmRoutes = (app) =>{
         }
     })
 
+
     app.post('/clearAlarm',async(req, res)=>{
          //can be raised by enginner and admin
          var type = 'user'
@@ -308,9 +346,16 @@ const AlarmRoutes = (app) =>{
              if(req.body.compactorID){
                 let alarm = new Alarm
                 let compactor = new Compactor
-                alarm.clearAlarm(req.body.compactorID)
-                compactor.clearAlarmRaised(req.body.compactorID)
-                
+                var alarmID = req.body.AlarmID
+                var compactorID = req.body.compactorID
+
+                alarm.clearAlarm(alarmID)
+
+                let getAlarm = await alarm.getAlarm(compactorID)
+                if(getAlarm.length <= 0){
+                    compactor.clearAlarmRaised(compactorID)
+                }
+ 
                 res.json(
                     {
                         'success' : true,
@@ -448,7 +493,7 @@ const AlarmRoutes = (app) =>{
                     var alarm = new Alarm(dynamicAlarmTable)
                     var alarmInfo = alarm.getAlarm(compactorID)
                     alarmInfo.then((result)=>{
-                        res.json({'alarmInfo' : result.Item})
+                        res.json({'alarmInfo' : result})
                     }).catch((err)=>{
                         res.json({'error' : err}) 
                     })

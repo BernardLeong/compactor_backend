@@ -87,7 +87,6 @@ class User{
         };
 
         params['Key'][idField] = userid
-        console.log(params)
         return new Promise((resolve, reject)=>{
             docClient.get(params, (err, data)=> {
                 if (err) {
@@ -224,6 +223,10 @@ class User{
                 }
             })
         });
+    }
+
+    getUser(){
+
     }
 
     getdynamicTable(type){
