@@ -91,8 +91,7 @@ class Authetication{
                     let user = new User
                     let userDetails = await user.getCurrentUser(userid, type)
                     // userDetails
-                    var { username } = userDetails
-                    resolve(username)
+                    resolve(userDetails)
                 }
             });
         })
@@ -277,11 +276,5 @@ class Authetication{
         })
     }
 }
-
-let auth = new Authetication
-var getUserNameFromToken = auth.getUserNameFromToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNvbXJjcmkiLCJwYXNzd29yZCI6ImFzZGZhc2RmIiwiaWF0IjoxNjA3MzE0ODE0fQ.DF4GH1QS3FjLHer0AVTVy0wATedIZQ7I02viygziz6Q')
-getUserNameFromToken.then((result)=>{
-    console.log(result)
-})
 
 module.exports = Authetication

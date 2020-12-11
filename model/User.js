@@ -120,6 +120,7 @@ class User{
                 if (err) {
                     reject("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
                 } else {
+                    console.log(data)
                     var dataItem = data.Items[0].serviceUserID || data.Items[0].adminUserID || data.Items[0].userid
                     resolve(dataItem)
                 }

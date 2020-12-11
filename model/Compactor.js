@@ -127,9 +127,7 @@ class Compactor{
     }
 
     scanAllCompactor(){
-        // console.log(this.compactTable)
         var tableName = this.compactTable || this.compactInfo
-        // console.log(tableName)
 
         var dynamoClient = this.docClient
         var params = {

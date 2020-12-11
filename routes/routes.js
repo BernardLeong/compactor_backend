@@ -16,6 +16,8 @@ const Login = (app) => {
             type = 'serviceUser'
         }
 
+        var accesstoken = null
+
         if(req.headers.authorization){
             var token = req.headers.authorization.split(' ')
             if(token[0] == 'Bearer'){
@@ -25,21 +27,30 @@ const Login = (app) => {
                     'success' : false,
                     'error' : 'Please use bearer token to log in'
                 })
-                accesstoken = null
             }
         }
 
         if(accesstoken){
-            let user = new User
-            let userid = await user.getUserIDFromToken(accesstoken)
-            user.getCurrentUser(userid, type).then((result)=>{
-                res.json(
-                    {
-                        'result' : result,
-                        'success' : true
-                    }
-                )
-            })
+            var auth = new Authetication;
+            var checktoken = await auth.checkToken(accesstoken, type)
+            if(checktoken <= 0){
+                res.json({
+                    'success' : false,
+                    'error' : 'Invalid token'
+                })
+            }else{
+                let getUserNameFromToken = auth.getUserNameFromToken(accesstoken)
+                getUserNameFromToken.then((userDetails)=>{
+                    console.log(username)
+                    var { username, password } = userDetails
+                    res.json({
+                        'success' : true,
+                        'username' : username,
+                        'password' : password
+                    })
+                })
+
+            }
         }else{
             res.json(
                 {
@@ -161,18 +172,55 @@ const Login = (app) => {
 
 const AlarmRoutes = (app) =>{
     app.get('/getDetailAlarm',async(req, res)=>{
-        let alarm = new Alarm
-        let compactor = new Compactor
-        var allAlarm = await alarm.getAllAlarm()
-        allAlarm = allAlarm.Items
-        for(i=0;i<allAlarm.length;i++){
-            var compactorDetails = await compactor.getCompactorInfo(allAlarm[i].compactorID)
-            allAlarm[i]['sectionArea'] = compactorDetails.Item.sectionArea
+        var type = 'user'
+        if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
+            type = 'admin'
         }
 
-        res.json({
-            'alarmInfo' : allAlarm
-        })
+        if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
+            type = 'serviceUser'
+        }
+        
+        var accesstoken = null
+        if(req.headers.authorization){
+            var token = req.headers.authorization.split(' ')
+            if(token[0] == 'Bearer'){
+                accesstoken = token[1]
+            }else{
+                res.json({
+                    'success' : false,
+                    'error' : 'Please use bearer token to log in'
+                })
+            }
+        }
+        if(accesstoken){
+            let auth = new Authetication
+            let checktoken = await auth.checkToken(accesstoken, type)
+            if(checktoken <= 0){
+                res.json({
+                    'success' : false,
+                    'error' : 'Invalid token'
+                })
+            }else{
+                let alarm = new Alarm
+                let compactor = new Compactor
+                var allAlarm = await alarm.getAllAlarm()
+                allAlarm = allAlarm.Items
+                for(i=0;i<allAlarm.length;i++){
+                    var compactorDetails = await compactor.getCompactorInfo(allAlarm[i].compactorID)
+                    allAlarm[i]['sectionArea'] = compactorDetails.Item.sectionArea
+                }
+        
+                res.json({
+                    'alarmInfo' : allAlarm
+                })
+            }
+        }else{
+            res.json({
+                'success' : false,
+                'error' : 'Please log in first'
+            })
+        }
     })
 
     app.get('/getTodaysAlarm/:section',async(req, res)=>{
@@ -199,42 +247,50 @@ const AlarmRoutes = (app) =>{
             }
         }
         if(accesstoken){
-            var todayDate = moment().format('L')
-            var alarm = new Alarm
-            let allAlarm = alarm.getAllAlarm()
-            allAlarm.then(async(alarms)=>{
-                var alarmArr = []
-                if(alarms.Count > 0){
-                    var allAlarms = alarms.Items
-                    for(i=0;i<allAlarms.length;i++){
-                        if(moment(allAlarms[i].timestamp).format('L') == todayDate){
-                            let comactorObj = new Compactor
-                            let compactorInfo = await comactorObj.getCompactorInfo(allAlarms[i].compactorID)
-                            if(compactorInfo.Item.sectionArea == req.params.section){
-                                alarmArr.push(allAlarms[i])
+            let auth = new Authetication
+            let checktoken = await auth.checkToken(accesstoken, type)
+            if(checktoken <= 0){
+                res.json({
+                    'success' : false,
+                    'error' : 'Invalid token'
+                })
+            }else{
+                var todayDate = moment().format('L')
+                var alarm = new Alarm
+                let allAlarm = alarm.getAllAlarm()
+                allAlarm.then(async(alarms)=>{
+                    var alarmArr = []
+                    if(alarms.Count > 0){
+                        var allAlarms = alarms.Items
+                        for(i=0;i<allAlarms.length;i++){
+                            if(moment(allAlarms[i].timestamp).format('L') == todayDate){
+                                let comactorObj = new Compactor
+                                let compactorInfo = await comactorObj.getCompactorInfo(allAlarms[i].compactorID)
+                                if(compactorInfo.Item.sectionArea == req.params.section){
+                                    alarmArr.push(allAlarms[i])
+                                }
                             }
                         }
+                        if(alarmArr.length <= 0){
+                            res.json({
+                                'success' : true,
+                                'alarms' : [],
+                                'message' : 'No Alarm Raised'
+                            })
+                        }else{
+                            res.json({
+                                'success' : true,
+                                'alarms' : alarmArr
+                            })
+                        }
+                    }else{
+                        res.json({
+                            'success' : true,
+                            'message' : 'No Alarm Raised'
+                        })
                     }
-            
-                if(alarmArr.length <= 0){
-                    res.json({
-                        'success' : true,
-                        'alarms' : [],
-                        'message' : 'No Alarm Raised'
-                    })
-                }else{
-                    res.json({
-                        'success' : true,
-                        'alarms' : alarmArr
-                    })
-                }
-                }else{
-                    res.json({
-                        'success' : true,
-                        'message' : 'No Alarm Raised'
-                    })
-                }
-            })
+                })
+            }
         }else{
             res.json({
                 'success' : false,
@@ -558,7 +614,9 @@ const AlarmRoutes = (app) =>{
 
 const CompactorRoutes = (app) =>{
     //can be done by admin
-    
+    app.post('/compactorDetailReport',async(req, res)=>{
+        //scan all compactor
+    })
     app.post('/addMachine',async(req, res)=>{
         var type = 'user'
         if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
@@ -934,7 +992,6 @@ const CompactorRoutes = (app) =>{
         }
     })
 
-    
     app.get('/allCompactorInfo', async(req, res)=>{
         var type = 'user'
         if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
@@ -944,6 +1001,7 @@ const CompactorRoutes = (app) =>{
         if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
             type = 'serviceUser'
         }
+
         if(type == 'serviceUser'){
             res.json({
                 'success' : false,

@@ -220,6 +220,4 @@ class Alarm{
     }
 }
 
-let alarm = new Alarm
-alarm.clearAlarm('AL0003')
 module.exports = Alarm
