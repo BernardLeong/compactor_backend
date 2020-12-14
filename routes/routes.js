@@ -4,6 +4,17 @@ const Compactor = require('./../model/Compactor')
 const User = require('./../model/User')
 const Authetication = require('./../model/Authetication')
 
+
+const Default = (app) => {
+    app.get('/',async(req, res)=>{
+        res.json(
+            {
+                'message' : 'Welcome to iZeem Backend API'
+            }
+        )
+    })
+}
+
 const Login = (app) => {
 
     app.get('/getCurrentUser',async(req, res)=>{
@@ -1117,5 +1128,6 @@ const CompactorRoutes = (app) =>{
 module.exports = { 
     "CompactorRoutes": CompactorRoutes,
     "AlarmRoutes": AlarmRoutes,
-    "Login" : Login
+    "Login" : Login,
+    "Default" : Default
 }
