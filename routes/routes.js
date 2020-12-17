@@ -52,7 +52,6 @@ const Login = (app) => {
             }else{
                 let getUserNameFromToken = auth.getUserNameFromToken(accesstoken)
                 getUserNameFromToken.then((userDetails)=>{
-                    console.log(username)
                     var { username, password } = userDetails
                     res.json({
                         'success' : true,
@@ -274,7 +273,7 @@ const AlarmRoutes = (app) =>{
                     if(alarms.Count > 0){
                         var allAlarms = alarms.Items
                         for(i=0;i<allAlarms.length;i++){
-                            if(moment(allAlarms[i].timestamp).format('L') == todayDate){
+                            if(moment(allAlarms[i].timeStamp).format('L') == todayDate){
                                 let comactorObj = new Compactor
                                 let compactorInfo = await comactorObj.getCompactorInfo(allAlarms[i].compactorID)
                                 if(compactorInfo.Item.sectionArea == req.params.section){
@@ -320,7 +319,6 @@ const AlarmRoutes = (app) =>{
             type = 'serviceUser'
         }
 
-        //ask for 
         var accesstoken = null
         if(req.headers.authorization){
             var token = req.headers.authorization.split(' ')
@@ -351,7 +349,7 @@ const AlarmRoutes = (app) =>{
                     if(alarms.Count > 0){
                         var allAlarms = alarms.Items
                         for(i=0;i<allAlarms.length;i++){
-                            if(moment(allAlarms[i].timestamp).format('L') == todayDate){
+                            if(moment(allAlarms[i].timeStamp).format('L') == todayDate){
                                 alarmArr.push(allAlarms[i])
                             }
                         }
@@ -473,7 +471,6 @@ const AlarmRoutes = (app) =>{
         if(accesstoken){
             let auth = new Authetication
             let checktoken = await auth.checkToken(accesstoken, type)
-            console.log(checktoken)
             if(checktoken <= 0){
                 res.json({
                     'success' : false,
@@ -1108,7 +1105,6 @@ const CompactorRoutes = (app) =>{
                     }
                     var allCompactInfo = compactor.scanAllCompactor()
                     allCompactInfo.then((result)=>{
-                        console.log(result.Items)
                         res.json({'compactorInfo' : result.Items})
                     }).catch((err)=>{
                         console.log(err)
