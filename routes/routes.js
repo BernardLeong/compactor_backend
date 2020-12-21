@@ -212,9 +212,16 @@ const AlarmRoutes = (app) =>{
                     'error' : 'Invalid token'
                 })
             }else{
-                let alarm = new Alarm
+                var date = moment().format('L');
+                var yymm = date.split('/')
+                yymm = `${yymm[2]}${yymm[0]}`
+
+                var getAlarmTable = `Alarm_${yymm}`
+
+                var alarm = new Alarm(getAlarmTable)
+                let allAlarm = await alarm.getAllAlarm()
+
                 let compactor = new Compactor
-                var allAlarm = await alarm.getAllAlarm()
                 allAlarm = allAlarm.Items
                 for(i=0;i<allAlarm.length;i++){
                     var compactorDetails = await compactor.getCompactorInfo(allAlarm[i].compactorID)
@@ -265,9 +272,17 @@ const AlarmRoutes = (app) =>{
                     'error' : 'Invalid token'
                 })
             }else{
-                var todayDate = moment().format('L')
-                var alarm = new Alarm
+                //get AlarmToday's table, we assume alarm raised is in Alarm_thisMonth
+
+                var date = moment().format('L');
+                var yymm = date.split('/')
+                yymm = `${yymm[2]}${yymm[0]}`
+
+                var getAlarmTable = `Alarm_${yymm}`
+
+                var alarm = new Alarm(getAlarmTable)
                 let allAlarm = alarm.getAllAlarm()
+
                 allAlarm.then(async(alarms)=>{
                     var alarmArr = []
                     if(alarms.Count > 0){
@@ -479,8 +494,6 @@ const AlarmRoutes = (app) =>{
             }else{
                 var alarmType = req.body.alarmType
                 var alarmStatus = req.body.alarmStatus
-                //get userid from token
-                // var userid = req.body
                 var userid = null
                 
                 auth.getIDFromToken(accesstoken,type).then(async(result)=>{
@@ -494,12 +507,17 @@ const AlarmRoutes = (app) =>{
                     let compact = await compactor.getCompactorInfo(compactorID)
                     var alarmDetails = {
                         "type" : alarmType,
-                        "status" : alarmStatus,
+                        "alarmStatus" : alarmStatus,
                         "userid" : userid,
                         "address" : compact.Item.address
                     }
-                        let alarm = new Alarm
-                
+
+                    var date = moment().format('L');
+                    var yymm = date.split('/')
+                    yymm = `${yymm[2]}${yymm[0]}`
+                    var getAlarmTable = `Alarm_${yymm}`
+                    let alarm = new Alarm(getAlarmTable)
+
                     if(compactorID){
                         alarm.raisedAlarm(compactorID, alarmDetails)
                         res.json({
@@ -553,7 +571,6 @@ const AlarmRoutes = (app) =>{
                     var yymm = dateObj.split('/')
                     yymm = `${yymm[2]}${yymm[0]}`
                     var dynamicAlarmTable = `Alarm_${yymm}`
-            
                     var alarm = new Alarm(dynamicAlarmTable)
                     var alarmInfo = alarm.getAlarm(compactorID)
                     alarmInfo.then((result)=>{

@@ -45,8 +45,9 @@ class Alarm{
     getAlarm(compactorID){
         var docClient = this.docClient
 
+        var tableName = this.alarmTable || this.alarmInfoTable
         var params = {
-            TableName: this.alarmInfoTable,
+            TableName: tableName,
             Select: "ALL_ATTRIBUTES",
             FilterExpression: "#compactorID = :compactorID",
             ExpressionAttributeNames: {
@@ -69,8 +70,7 @@ class Alarm{
     }
 
     getAllAlarm(){
-        var tableName = this.alarmInfoTable 
-        
+        var tableName = this.alarmTable || this.alarmInfoTable 
         var dynamoClient = this.docClient
         var params = {
           TableName: tableName, // give it your table name 
@@ -131,16 +131,17 @@ class Alarm{
 
     async createAlarm(compactorID, alarmDetails){
         var docClient = this.docClient
-        var { type, status, userid, address } = alarmDetails
+        var { type, alarmStatus, userid, address } = alarmDetails
         var { prefix, lastid } = await this.getPrefixedAlarmID()
 
+        var tableName = this.alarmTable || this.alarmInfoTable
         var params = {
-            TableName: this.alarmInfoTable,
+            TableName: tableName,
             Item:{
-                "AlarmID" : prefix,
+                "alarmID" : prefix,
                 "compactorID": compactorID,
                 "timeStamp" : Date.now(),
-                "status" : status,
+                "alarmStatus" : alarmStatus,
                 "type" : type,
                 "userid" : userid,
                 "address" : address,
