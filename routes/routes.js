@@ -275,7 +275,7 @@ const AlarmRoutes = (app) =>{
                 //get AlarmToday's table, we assume alarm raised is in Alarm_thisMonth
 
                 var todayDate = moment().format('L')
-                var yymm = date.split('/')
+                var yymm = todayDate.split('/')
                 yymm = `${yymm[2]}${yymm[0]}`
 
                 var getAlarmTable = `Alarm_${yymm}`
