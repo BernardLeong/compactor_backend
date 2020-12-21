@@ -274,7 +274,7 @@ const AlarmRoutes = (app) =>{
             }else{
                 //get AlarmToday's table, we assume alarm raised is in Alarm_thisMonth
 
-                var date = moment().format('L');
+                var todayDate = moment().format('L')
                 var yymm = date.split('/')
                 yymm = `${yymm[2]}${yymm[0]}`
 

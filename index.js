@@ -42,9 +42,9 @@ app.post('/returnCoordinates',(req, res)=>{
         console.log(result.data.results)
         res.json({'hii' : result.data.results})
     }).catch((err)=>{
-        // res.json({'error' : err})
+        res.json({'error' : err})
     })
     // res.json({'hii' : "result"})
 })
 
-app.listen(8080)
+app.listen(80)
