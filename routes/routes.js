@@ -357,7 +357,12 @@ const AlarmRoutes = (app) =>{
                 })
             }else{
                 var todayDate = moment().format('L')
-                var alarm = new Alarm
+                var yymm = todayDate.split('/')
+                yymm = `${yymm[2]}${yymm[0]}`
+
+                var getAlarmTable = `Alarm_${yymm}`
+
+                var alarm = new Alarm(getAlarmTable)
                 let allAlarm = alarm.getAllAlarm()
                 allAlarm.then((alarms)=>{
                     var alarmArr = []
@@ -884,7 +889,6 @@ const CompactorRoutes = (app) =>{
                 })
             }
         } 
-        
     })
     
     //login using normal user
