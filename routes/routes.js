@@ -373,7 +373,9 @@ const AlarmRoutes = (app) =>{
                             let compactorInfo = await compactorObj.getCompactorInfo(allAlarms[i].compactorID)
                             var sectionArea = compactorInfo.Item.sectionArea
                             if(moment(allAlarms[i].timeStamp).format('L') == todayDate){
+                                var alarmDescription = await alarm.getAlarmDescription(allAlarms[i].type)
                                 allAlarms[i]['sectionArea'] = sectionArea
+                                allAlarms[i]['alarmDescription'] = alarmDescription
                                 alarmArr.push(allAlarms[i])
                             }
                         }

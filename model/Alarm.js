@@ -219,6 +219,28 @@ class Alarm{
             return;
         }
     }
+
+    getAlarmDescription(alarmID){
+        var docClient = this.docClient
+        var tableName = this.alarmInfoTable
+        var params = {
+            TableName: tableName,
+            Key:{
+                "alarmID": alarmID
+            }
+        };
+        
+        return new Promise((resolve, reject)=>{
+            docClient.get(params, (err, data)=>{
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data.Item.description);
+                }
+            });
+        })
+        
+    }
 }
 
 module.exports = Alarm
