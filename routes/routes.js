@@ -364,12 +364,16 @@ const AlarmRoutes = (app) =>{
 
                 var alarm = new Alarm(getAlarmTable)
                 let allAlarm = alarm.getAllAlarm()
-                allAlarm.then((alarms)=>{
+                allAlarm.then(async(alarms)=>{
                     var alarmArr = []
                     if(alarms.Count > 0){
                         var allAlarms = alarms.Items
                         for(i=0;i<allAlarms.length;i++){
+                            let compactorObj = new Compactor
+                            let compactorInfo = await compactorObj.getCompactorInfo(allAlarms[i].compactorID)
+                            var sectionArea = compactorInfo.Item.sectionArea
                             if(moment(allAlarms[i].timeStamp).format('L') == todayDate){
+                                allAlarms[i]['sectionArea'] = sectionArea
                                 alarmArr.push(allAlarms[i])
                             }
                         }
