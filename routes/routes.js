@@ -630,7 +630,12 @@ const AlarmRoutes = (app) =>{
                     })
                 }else{
                     //if dont have throw error
-                    var alarm = new Alarm
+                    let dateObj = moment().format('L');
+                    var yymm = dateObj.split('/')
+                    yymm = `${yymm[2]}${yymm[0]}`
+                    var dynamicAlarmTable = `Alarm_${yymm}`
+
+                    var alarm = new Alarm(dynamicAlarmTable)
                     var allAlarmInfo = alarm.getAllAlarm()
                     allAlarmInfo.then((result)=>{
                         res.json({'alarmInfo' : result.Items})
