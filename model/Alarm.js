@@ -11,6 +11,14 @@ class Alarm{
                 secretAccessKey: process.env.SECRETACCESSKEY
             }
         );
+
+        this.livedocClient = new AWS.DynamoDB.DocumentClient(
+            {
+                region: 'ap-southeast-1',
+                accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
+                secretAccessKey: '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'
+            }
+        );
         this.compactInfoTable = 'CompactorInfo'
         this.alarmTable = alarmTable
         this.alarmInfoTable = 'AlarmInfo'
@@ -69,7 +77,28 @@ class Alarm{
         })
     }
 
+    getAllLiveAlarm(){
+        console.log(tableName)
+        var tableName = this.alarmTable || this.alarmInfoTable 
+        var dynamoClient = this.livedocClient
+        var params = {
+          TableName: tableName, // give it your table name 
+          Select: "ALL_ATTRIBUTES"
+        };
+      
+        return new Promise((resolve, reject)=>{
+            dynamoClient.scan(params, (err, data)=> {
+                if (err) {
+                    reject(err)
+                 } else {
+                    resolve(data)
+                 }
+            })
+        });
+    }
+
     getAllAlarm(){
+        console.log(tableName)
         var tableName = this.alarmTable || this.alarmInfoTable 
         var dynamoClient = this.docClient
         var params = {

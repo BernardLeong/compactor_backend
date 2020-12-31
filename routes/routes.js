@@ -323,7 +323,59 @@ const AlarmRoutes = (app) =>{
             })
         }
     })
+    
+    app.get('/getTodaysAlarms/live',async(req, res)=>{
+        var todayDate = moment().format('L')
+        var yymm = todayDate.split('/')
+        yymm = `${yymm[2]}${yymm[0]}`
 
+        var getAlarmTable = `Alarm_${yymm}`
+
+        var alarm = new Alarm(getAlarmTable)
+        let allAlarm = await alarm.getAllLiveAlarm()
+        
+        var todaysDate = new Date().toISOString().split('T')[0]
+        let alarmData = []
+        allAlarm = allAlarm.Items
+        for(var i =0;i<allAlarm.length;i++){
+            var date = allAlarm[i].ts.split(' ')
+            date = date[0]
+            if(date == todaysDate){
+                allAlarm[i]['sectionArea'] = 'A'
+                alarmData.push(allAlarm[i])
+            }
+        }
+
+        res.json({
+            'success' : true,
+            'alarms' : alarmData
+        })
+        // allAlarm.then(async(alarms)=>{
+        //     var alarmArr = []
+        //     if(alarms.Count > 0){
+        //         var allAlarms = alarms.Items
+        //         for(i=0;i<allAlarms.length;i++){
+        //             let compactorObj = new Compactor
+        //             let compactorInfo = await compactorObj.getCompactorInfo(allAlarms[i].compactorID)
+        //             var sectionArea = compactorInfo.Item.sectionArea
+        //             if(moment(allAlarms[i].timeStamp).format('L') == todayDate){
+        //                 var alarmDescription = await alarm.getAlarmDescription(allAlarms[i].type)
+        //                 allAlarms[i]['sectionArea'] = sectionArea
+        //                 allAlarms[i]['alarmDescription'] = alarmDescription
+        //                 alarmArr.push(allAlarms[i])
+        //             }
+        //         }
+        //         res.json({
+        //             'success' : true,
+        //             'alarms' : alarmArr
+        //         })
+        //     }else{
+        //         res.json({
+        //             'success' : true,
+        //             'message' : 'No Alarm Raised'
+        //         })
+        //     }
+    })
     app.get('/getTodaysAlarm',async(req, res)=>{
         var type = 'user'
         if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
@@ -595,6 +647,20 @@ const AlarmRoutes = (app) =>{
        
     })
 
+    app.get('/getAllAlarms/live', async(req,res)=>{
+        let dateObj = moment().format('L');
+        var yymm = dateObj.split('/')
+        yymm = `${yymm[2]}${yymm[0]}`
+        var dynamicAlarmTable = `Alarm_${yymm}`
+
+        var alarm = new Alarm(dynamicAlarmTable)
+        var allAlarmInfo = alarm.getAllLiveAlarm()
+        allAlarmInfo.then((result)=>{
+            res.json({'alarmInfo' : result.Items})
+        }).catch((err)=>{
+            res.json({'error' : err})
+        })
+    })
     //user rights , read only
     app.get('/getAllAlarm', async(req,res)=>{
         //can be read by enginner, user and admin
@@ -1030,6 +1096,21 @@ const CompactorRoutes = (app) =>{
                 'error' : 'Please log in first'
             })
         }
+    })
+
+    app.get('/allCompactorInfos/live', async(req, res)=>{
+        let dateObj = moment().format('L');
+        var yymmdd = dateObj.split('/')
+        yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
+        let tableName = `Compactor_${yymmdd}`
+        let compactor = new Compactor(tableName)
+        var allCompactInfo = compactor.scanAllLiveCompactor()
+
+        allCompactInfo.then((result)=>{
+            res.json({'compactorInfo' : result})
+        }).catch((err)=>{
+            console.log(err)
+        })
     })
 
     app.get('/allCompactorInfo', async(req, res)=>{
