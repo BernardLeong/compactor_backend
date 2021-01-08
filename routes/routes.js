@@ -326,8 +326,8 @@ const AlarmRoutes = (app) =>{
 
     app.get('/sendmail',async(req, res)=>{
         const mailgun = require("mailgun-js");
-        const DOMAIN = 'replies.izeemiot.de';
-        const api_key = 'f92f93a32c4a56e183d57ff56ec8bef6-3d0809fb-33dfe060';
+        const DOMAIN = process.env.MAILGUN_DOMAIN;
+        const api_key = process.env.MAILGUN_API_KEY
         
         const mg = mailgun({apiKey: api_key, domain: DOMAIN});
         const data = {
@@ -343,8 +343,6 @@ const AlarmRoutes = (app) =>{
                 }
             )
         });
-
-    
     })
     
     
