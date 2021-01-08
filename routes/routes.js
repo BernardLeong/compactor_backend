@@ -331,7 +331,7 @@ const AlarmRoutes = (app) =>{
         
         const mg = mailgun({apiKey: api_key, domain: DOMAIN});
         const data = {
-            from: 'bernard.leong@izeem.com',
+            from: 'bernard.pub125147@gmail.com',
             to: 'bernardleongqijie@gmail.com',
             subject: 'Hello',
             text: 'Testing some Mailgun awesomness!'
