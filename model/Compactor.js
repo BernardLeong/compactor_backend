@@ -20,7 +20,7 @@ class Compactor{
                 secretAccessKey: 'Z4HU+YNhgDRRA33dQJTo9TslCT/x4vglhKw2kQMQ'
             }
         );
-
+        this.addressTable = 'CompactorAddresses'
         this.compactTable = compactTable
         this.compactInfo = 'CompactorInfo'
     }
@@ -75,6 +75,26 @@ class Compactor{
         })
     }
 
+    scanAllLiveCoordinates(){
+        var dynamoClient = this.livedocClient
+        var tableName = this.addressTable
+        var params = {
+            TableName: tableName, // give it your table name 
+            Select: "ALL_ATTRIBUTES"
+          };
+
+          return new Promise((resolve, reject)=>{
+            dynamoClient.scan(params, (err, data)=> {
+                if (err) {
+                    reject(err)
+                 } else {
+                    var dataItems = data.Items
+                    resolve(dataItems)
+                 }
+            })
+        });
+    }
+
     scanAllLiveCompactor(){
         var dynamoClient = this.livedocClient
         var tableName = this.compactTable || this.compactInfo
@@ -93,11 +113,6 @@ class Compactor{
                        for(var i=0;i<dataItems.length;i++){
                             // dataItems[i]['WeightPercentage'] = dataItems[i].FilledLevel-Weight
                             dataItems[i]['sectionArea'] = 'A'
-                            dataItems[i]['address'] = '21 SERANGOON NORTSH AVENUE 3'
-                            dataItems[i]['coordinate'] = {
-                                "lat": 1.373332475,
-                                "long": 103.8699072
-                            }
                        }
                       resolve(dataItems)
                    }

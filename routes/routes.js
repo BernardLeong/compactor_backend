@@ -1097,14 +1097,24 @@ const CompactorRoutes = (app) =>{
         }
     })
 
+    app.get('/allCompactorAddresses/live', async(req, res)=>{
+        let compactor = new Compactor()
+        var allCompactorAddresses = compactor.scanAllLiveCoordinates()
+        allCompactorAddresses.then((result)=>{
+            res.json({'compactorAddresses' : result})
+        }).catch((err)=>{
+            console.log(err)
+        })
+    })
+
     app.get('/allCompactorInfos/live', async(req, res)=>{
         let dateObj = moment().format('L');
         var yymmdd = dateObj.split('/')
         yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
-        let tableName = `Compactor_${yymmdd}`
+        var tableName = `Compactor_${yymmdd}`
+        tableName = `Compactor_20210102`
         let compactor = new Compactor(tableName)
         var allCompactInfo = compactor.scanAllLiveCompactor()
-
         allCompactInfo.then((result)=>{
             res.json({'compactorInfo' : result})
         }).catch((err)=>{
