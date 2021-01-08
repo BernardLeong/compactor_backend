@@ -25,66 +25,6 @@ class Compactor{
         this.compactInfo = 'CompactorInfo'
     }
 
-    offEngine(compactorID){
-        let alarm = new Alarm
-        let getAlarm = alarm.getAlarm(compactorID)
-        var docClient = this.docClient
-        return new Promise((resolve, reject)=>{
-            getAlarm.then((result)=>{
-                if(Object.keys(result).length != 0){
-                    //if not empty
-                    //change status to off
-                    var alarmStatus = 'off'
-                    var tableName = 'Alarm_202010'
-                    var params = {
-                        TableName:tableName,
-                        Key:{
-                            "compactorID": compactorID
-                        },
-                        UpdateExpression: "set alarmStatus = :alarmStatus",
-                        ExpressionAttributeValues:{
-                            ":alarmStatus":alarmStatus,
-                        },
-                        ReturnValues:"UPDATED_NEW"
-                    };
-                    docClient.update(params, (err, data)=>{
-                        if (err) {
-                            reject(err)
-                        } else {
-                            resolve(data)
-                        }
-                    });
-                }
-            })
-        })
-    }
-
-    editCompactor(compactorID, compactorDetails){
-        var tableName = this.compactInfo
-        var docClient = this.docClient
-        var { address, compactorType, sectionArea } = compactorDetails
-        var params = {
-            TableName:tableName,
-            Key:{
-                "compactorID": compactorID
-            },
-            UpdateExpression: "set address = :compactorAddress, compactorType=:compactorType, sectionArea=:compactorSection",
-            ExpressionAttributeValues:{
-                ":compactorAddress":address,
-                ":compactorType":compactorType,
-                ":compactorSection":sectionArea
-            },
-            ReturnValues:"UPDATED_NEW"
-        };
-        docClient.update(params, (err, data)=>{
-            if (err) {
-                console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
-            } else {
-                console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
-            }
-        });
-    }
-
     clearAlarmRaised(compactorID){
         var docClient = this.docClient
         var params = {

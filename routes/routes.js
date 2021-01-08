@@ -323,6 +323,30 @@ const AlarmRoutes = (app) =>{
             })
         }
     })
+
+    app.get('/sendmail',async(req, res)=>{
+        const mailgun = require("mailgun-js");
+        const DOMAIN = 'replies.izeemiot.de';
+        const api_key = 'f92f93a32c4a56e183d57ff56ec8bef6-3d0809fb-33dfe060';
+        
+        const mg = mailgun({apiKey: api_key, domain: DOMAIN});
+        const data = {
+            from: 'bernard.leong@izeem.com',
+            to: 'bernardleongqijie@gmail.com',
+            subject: 'Hello',
+            text: 'Testing some Mailgun awesomness!'
+        };
+        mg.messages().send(data, function (error, body) {
+            res.json(
+                {
+                    result : body
+                }
+            )
+        });
+
+    
+    })
+    
     
     app.get('/getTodaysAlarms/live',async(req, res)=>{
         var todayDate = moment().format('L')
@@ -350,31 +374,6 @@ const AlarmRoutes = (app) =>{
             'success' : true,
             'alarms' : alarmData
         })
-        // allAlarm.then(async(alarms)=>{
-        //     var alarmArr = []
-        //     if(alarms.Count > 0){
-        //         var allAlarms = alarms.Items
-        //         for(i=0;i<allAlarms.length;i++){
-        //             let compactorObj = new Compactor
-        //             let compactorInfo = await compactorObj.getCompactorInfo(allAlarms[i].compactorID)
-        //             var sectionArea = compactorInfo.Item.sectionArea
-        //             if(moment(allAlarms[i].timeStamp).format('L') == todayDate){
-        //                 var alarmDescription = await alarm.getAlarmDescription(allAlarms[i].type)
-        //                 allAlarms[i]['sectionArea'] = sectionArea
-        //                 allAlarms[i]['alarmDescription'] = alarmDescription
-        //                 alarmArr.push(allAlarms[i])
-        //             }
-        //         }
-        //         res.json({
-        //             'success' : true,
-        //             'alarms' : alarmArr
-        //         })
-        //     }else{
-        //         res.json({
-        //             'success' : true,
-        //             'message' : 'No Alarm Raised'
-        //         })
-        //     }
     })
     app.get('/getTodaysAlarm',async(req, res)=>{
         var type = 'user'
