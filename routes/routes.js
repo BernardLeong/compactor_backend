@@ -324,24 +324,52 @@ const AlarmRoutes = (app) =>{
         }
     })
 
-    app.get('/sendmail',async(req, res)=>{
+    app.post('/sendmail',async(req, res)=>{
         const mailgun = require("mailgun-js");
         const DOMAIN = process.env.MAILGUN_DOMAIN;
         const api_key = process.env.MAILGUN_API_KEY
-        
+        console.log(req.body.ID)
         const mg = mailgun({apiKey: api_key, domain: DOMAIN});
-        // const data = {
-        //     from: 'bernard.leong@izeem.com',
-        //     to: ['emily.koh@izeem.com','sandee@izeem.com'],
-        //     subject: 'Alarm Trigger',
-        //     text: 'Alarm Has been Triggered'
-        // };
-        // ['bernard.leong@izeem.com','emily.koh@izeem.com']
+        // 'sandee@izeem.com'
+        // 'emily.koh@izeem.com'
+        var Etype = 'Minimatic'
+        if(req.body.EquipmentType == 'DS'){
+            var Etype = 'DustScrew'
+        }
+        var template = ''
+        if(req.body.Status == 'Cleared'){
+            template = `
+            <div>Dear Sir/Mdm,</div>
+            <div>&nbsp;</div>
+            <div>Please be informed that ${Etype} Alarm had been Cleared</div>
+            <div>&nbsp;</div>
+            <div>Details are below</div>
+            <div>&nbsp;</div>
+            <div>ID : ${req.body.ID},</div>
+            <div>ts: ${req.body.ts},</div>
+            <div>EquipmentType: ${req.body.EquipmentType},</div>
+            <div>Type: ${req.body.Type},</div>
+            <div>Status: ${req.body.Status}</div>`
+        }else{
+            var template = `
+            <div>Dear Sir/Mdm,</div>
+            <div>&nbsp;</div>
+            <div>Please be informed that ${Etype} Alarm had been Raised</div>
+            <div>&nbsp;</div>
+            <div>Details are below</div>
+            <div>&nbsp;</div>
+            <div>ID : ${req.body.ID},</div>
+            <div>ts: ${req.body.ts},</div>
+            <div>EquipmentType: ${req.body.EquipmentType},</div>
+            <div>Type: ${req.body.Type},</div>
+            <div>Status: ${req.body.Status}</div>
+            `
+        }
         const data = {
-            from: 'bernard.leong@izeem.com',
-            to: ['geraldina.koh@sembcorp.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','bernard.leong@izeem.com','emily.koh@izeem.com','sandee@izeem.com'],
+            from: 'bernard.pub125147@gmail.com',
+            to: ['emily.koh@izeem.com','sandee@izeem.com','bernard.leong@izeem.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com'],
             subject: 'Alarm Trigger',
-            text: 'Alarm Has been Triggered'
+            html: template
         };
         mg.messages().send(data, (error, body)=> {
             res.json(
@@ -1117,7 +1145,7 @@ const CompactorRoutes = (app) =>{
         var yymmdd = dateObj.split('/')
         yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
         var tableName = `Compactor_${yymmdd}`
-        tableName = `Compactor_20210102`
+        // tableName = `Compactor_20210102`
         let compactor = new Compactor(tableName)
         var allCompactInfo = compactor.scanAllLiveCompactor()
         allCompactInfo.then((result)=>{
