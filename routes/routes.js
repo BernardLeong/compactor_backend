@@ -330,9 +330,16 @@ const AlarmRoutes = (app) =>{
         const api_key = process.env.MAILGUN_API_KEY
         
         const mg = mailgun({apiKey: api_key, domain: DOMAIN});
+        // const data = {
+        //     from: 'bernard.leong@izeem.com',
+        //     to: ['emily.koh@izeem.com','sandee@izeem.com'],
+        //     subject: 'Alarm Trigger',
+        //     text: 'Alarm Has been Triggered'
+        // };
+        // ['bernard.leong@izeem.com','emily.koh@izeem.com']
         const data = {
             from: 'bernard.leong@izeem.com',
-            to: ['emily.koh@izeem.com','sandee@izeem.com'],
+            to: ['geraldina.koh@sembcorp.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','bernard.leong@izeem.com','emily.koh@izeem.com','sandee@izeem.com'],
             subject: 'Alarm Trigger',
             text: 'Alarm Has been Triggered'
         };
