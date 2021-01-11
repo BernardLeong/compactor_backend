@@ -1146,7 +1146,7 @@ const CompactorRoutes = (app) =>{
         var yymmdd = dateObj.split('/')
         yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
         var tableName = `Compactor_${yymmdd}`
-        tableName = `Compactor_20210102`
+        // tableName = `Compactor_20210102`
         let compactor = new Compactor(tableName)
         var allCompactInfo = compactor.scanAllLiveCompactor()
         allCompactInfo.then((result)=>{
