@@ -368,7 +368,7 @@ const AlarmRoutes = (app) =>{
        
         const data = {
             from: 'bernard.pub125147@gmail.com',
-            to: ['bernardleongqijie@gmail.com','bernard.leong@izeem.com'],
+            to: ['emily.koh@izeem.com','bernardleongqijie@gmail.com','bernard.leong@izeem.com'],
             subject: 'Alarm Trigger',
             html: template
         };
