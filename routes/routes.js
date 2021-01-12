@@ -328,10 +328,7 @@ const AlarmRoutes = (app) =>{
         const mailgun = require("mailgun-js");
         const DOMAIN = process.env.MAILGUN_DOMAIN;
         const api_key = process.env.MAILGUN_API_KEY
-        console.log(req.body.ID)
         const mg = mailgun({apiKey: api_key, domain: DOMAIN});
-        // 'sandee@izeem.com'
-        // 'emily.koh@izeem.com'
         var Etype = 'Minimatic'
         if(req.body.EquipmentType == 'DS'){
             var Etype = 'DustScrew'
@@ -365,9 +362,10 @@ const AlarmRoutes = (app) =>{
             <div>Status: ${req.body.Status}</div>
             `
         }
+        // to: ['emily.koh@izeem.com','sandee@izeem.com','bernard.leong@izeem.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com'],
         const data = {
             from: 'bernard.pub125147@gmail.com',
-            to: ['emily.koh@izeem.com','sandee@izeem.com','bernard.leong@izeem.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com'],
+            to: ['emily.koh@izeem.com','bernardleongqijie@gmail.com'],
             subject: 'Alarm Trigger',
             html: template
         };
