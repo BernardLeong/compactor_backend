@@ -376,9 +376,12 @@ const AlarmRoutes = (app) =>{
                 }
             )
         });
+
+        //update sendmail to true
+        var alarm = new Alarm
+        alarm.clearMailAlarm(req.body.ID)
     })
-    
-    
+
     app.get('/getTodaysAlarms/live',async(req, res)=>{
         var todayDate = moment().format('L')
         var yymm = todayDate.split('/')
