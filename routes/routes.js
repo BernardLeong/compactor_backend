@@ -366,7 +366,7 @@ const AlarmRoutes = (app) =>{
         const data = {
             from: 'bernard.pub125147@gmail.com',
             to: ['emily.koh@izeem.com','sandee@izeem.com','bernard.leong@izeem.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com','seahyw@gmail.com'],
-            subject: 'Alarm Trigger',
+            subject: 'One Alarm Trigger Received',
             html: template
         };
         mg.messages().send(data, (error, body)=> {
