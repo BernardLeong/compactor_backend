@@ -382,6 +382,40 @@ const AlarmRoutes = (app) =>{
         alarm.clearMailAlarm(req.body.ID)
     })
 
+    app.get('/getTodaysAlarms/esri',async(req, res)=>{
+        if(req.headers.apikey == 'esriAlarmAPI'){
+            var todayDate = moment().format('L')
+            var yymm = todayDate.split('/')
+            yymm = `${yymm[2]}${yymm[0]}`
+    
+            var getAlarmTable = `Alarm_${yymm}`
+    
+            var alarm = new Alarm(getAlarmTable)
+            let allAlarm = await alarm.getAllLiveAlarm()
+            
+            var todaysDate = new Date().toISOString().split('T')[0]
+            let alarmData = []
+            allAlarm = allAlarm.Items
+            for(var i =0;i<allAlarm.length;i++){
+                var date = allAlarm[i].ts.split(' ')
+                date = date[0]
+                if(date == todaysDate){
+                    allAlarm[i]['sectionArea'] = 'CBM'
+                    alarmData.push(allAlarm[i])
+                }
+            }
+    
+            res.json({
+                'success' : true,
+                'alarms' : alarmData
+            })
+        }else{
+            res.json({
+                'error' : 'Esri Alarm API Key required'
+            })
+        }
+    })
+
     app.get('/getTodaysAlarms/live',async(req, res)=>{
         var todayDate = moment().format('L')
         var yymm = todayDate.split('/')
@@ -1139,6 +1173,57 @@ const CompactorRoutes = (app) =>{
         }).catch((err)=>{
             console.log(err)
         })
+    })
+
+    app.get('/Alarms/esri',async(req, res)=>{
+        if(req.headers.apikey == 'esriAlarmAPI'){
+            var todayDate = moment().format('L')
+            var yymm = todayDate.split('/')
+            yymm = `${yymm[2]}${yymm[0]}`
+    
+            var getAlarmTable = `Alarm_${yymm}`
+    
+            var alarm = new Alarm(getAlarmTable)
+            let allAlarm = await alarm.getAllLiveAlarm()
+            
+            var todaysDate = new Date().toISOString().split('T')[0]
+            let alarmData = []
+            allAlarm = allAlarm.Items
+            for(var i =0;i<allAlarm.length;i++){
+                var date = allAlarm[i].ts.split(' ')
+                date = date[0]
+                if(date == todaysDate){
+                    allAlarm[i]['sectionArea'] = 'CBM'
+                    alarmData.push(allAlarm[i])
+                }
+            }
+    
+            res.json({
+                'success' : true,
+                'alarms' : alarmData
+            })
+        }else{
+            res.json({'error' : 'Esri Alarm API key required'})
+        }
+    })
+
+    app.get('/Compactor/esri', async(req, res)=>{
+        if(req.headers.apikey == 'esriCompactorAPI'){
+            let dateObj = moment().format('L');
+            var yymmdd = dateObj.split('/')
+            yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
+            var tableName = `Compactor_${yymmdd}`
+            // tableName = `Compactor_20210102`
+            let compactor = new Compactor(tableName)
+            var allCompactInfo = compactor.scanAllLiveCompactor()
+            allCompactInfo.then((result)=>{
+                res.json({'compactorInfo' : result})
+            }).catch((err)=>{
+                console.log(err)
+            })
+        }else{
+            res.json({'error' : 'Esri Compactor API key required'})
+        }
     })
 
     app.get('/allCompactorInfos/live', async(req, res)=>{
