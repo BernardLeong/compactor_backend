@@ -111,9 +111,8 @@ class Compactor{
                        var dataItems = data.Items
 
                        for(var i=0;i<dataItems.length;i++){
-                            // dataItems[i]['WeightPercentage'] = dataItems[i].FilledLevel-Weight
-                            dataItems[i]['sectionArea'] = 'A'
-                       }
+                            dataItems[i]['sectionArea'] = 'CBM'
+                        }
                       resolve(dataItems)
                    }
               })
