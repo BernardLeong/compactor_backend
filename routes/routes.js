@@ -399,7 +399,7 @@ const AlarmRoutes = (app) =>{
             var date = allAlarm[i].ts.split(' ')
             date = date[0]
             if(date == todaysDate){
-                allAlarm[i]['sectionArea'] = 'A'
+                allAlarm[i]['sectionArea'] = 'CBM'
                 alarmData.push(allAlarm[i])
             }
         }
