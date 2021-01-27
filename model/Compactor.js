@@ -75,7 +75,7 @@ class Compactor{
         })
     }
 
-    scanAllLiveCoordinates(){
+    async scanAllLiveCoordinates(){
         var dynamoClient = this.livedocClient
         var tableName = this.addressTable
         var params = {

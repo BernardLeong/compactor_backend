@@ -329,6 +329,15 @@ const AlarmRoutes = (app) =>{
         const DOMAIN = process.env.MAILGUN_DOMAIN;
         const api_key = process.env.MAILGUN_API_KEY
         const mg = mailgun({apiKey: api_key, domain: DOMAIN});
+        //mark
+        var compactor = new Compactor
+        var allCompactorAddresses = await compactor.scanAllLiveCoordinates()
+        var address = ''
+        for(var i=0;i<allCompactorAddresses.length;i++){
+            if(req.body.ID == allCompactorAddresses[i].EquipmentID){
+                address = allCompactorAddresses[i].address
+            }
+        }
         var Etype = 'Minimatic'
         if(req.body.EquipmentType == 'DS'){
             var Etype = 'DustScrew'
@@ -346,7 +355,9 @@ const AlarmRoutes = (app) =>{
             <div>ts: ${req.body.ts},</div>
             <div>EquipmentType: ${req.body.EquipmentType},</div>
             <div>Type: ${req.body.Type},</div>
-            <div>Status: ${req.body.Status}</div>`
+            <div>Status: ${req.body.Status}</div>
+            <div>Location: ${address}</div>            
+            `
         }else{
             var template = `
             <div>Dear Sir/Mdm,</div>
@@ -360,6 +371,7 @@ const AlarmRoutes = (app) =>{
             <div>EquipmentType: ${req.body.EquipmentType},</div>
             <div>Type: ${req.body.Type},</div>
             <div>Status: ${req.body.Status}</div>
+            <div>Location: ${address}</div> 
             `
         }
         // to: ['emily.koh@izeem.com','sandee@izeem.com','bernard.leong@izeem.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com'],
