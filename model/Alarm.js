@@ -77,13 +77,14 @@ class Alarm{
         })
     }
 
-    clearMailAlarm(compactorID){
+    async clearMailAlarm(timestamp, compactorID){
         var docClient = this.livedocClient
         var table = 'AlarmToBeMailed'
         var params = {
             TableName:table,
             Key:{
-                "ID": compactorID,
+                "ts": timestamp,
+                "ID" : compactorID
             },
             UpdateExpression: "set SendMail = :sendmail",
             ExpressionAttributeValues:{
@@ -98,7 +99,6 @@ class Alarm{
                 console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
             }
         });
-       
     }
 
     getAllLiveAlarm(){

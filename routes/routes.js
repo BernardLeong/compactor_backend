@@ -416,10 +416,11 @@ const AlarmRoutes = (app) =>{
         // to: ['emily.koh@izeem.com','sandee@izeem.com','bernard.leong@izeem.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com'],
         const data = {
             from: 'bernard.pub125147@gmail.com',
-            to: ['emily.koh@izeem.com','bernardleongqijie@gmail.com','seahyw@gmail.com'],
+            to: ['emily.koh@izeem.com','sandee@izeem.com','bernard.leong@izeem.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com'],
             subject: 'One Alarm Trigger Received',
             html: template
         };
+        
         mg.messages().send(data, (error, body)=> {
             res.json(
                 {
@@ -428,9 +429,8 @@ const AlarmRoutes = (app) =>{
             )
         });
 
-        //update sendmail to true
         var alarm = new Alarm
-        alarm.clearMailAlarm(req.body.ID)
+        var clear = await alarm.clearMailAlarm(req.body.ts, req.body.ID)
     })
 
     app.get('/getTodaysAlarms/live',async(req, res)=>{
