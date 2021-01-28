@@ -1,8 +1,16 @@
 const moment = require('moment')
+const AWS = require('aws-sdk')
+const fs = require('fs')
+const util = require('util')
+const writeFile = util.promisify(fs.writeFile)
 const Alarm = require('./../model/Alarm')
 const Compactor = require('./../model/Compactor')
 const User = require('./../model/User')
 const Authetication = require('./../model/Authetication')
+const s3 = new AWS.S3({
+    accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
+    secretAccessKey: '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'
+})
 
 
 const Default = (app) => {
@@ -12,6 +20,34 @@ const Default = (app) => {
                 'message' : 'Welcome to iZeem Backend API'
             }
         )
+    })
+}
+
+const Download = (app) => {
+    app.get('/generatePDF',async(req, res)=>{
+        var params = {
+            Key: 'blah.json',
+            Bucket: 'testingiotdata202023948'
+        }
+//mark
+        var date = moment().format('L');
+        var yymmdd = date.split('/')
+        yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
+        var fileName = `alarmReportPDF_${yymmdd}.json`
+
+        var file = `${__dirname}/../${fileName}`;
+        fs.unlink(file, (err) => {
+            if (err) {
+              res.json({'error' : err})
+            }
+        })
+
+        s3.getObject(params).promise().then((data) => {
+            writeFile(`./${fileName}`, data.Body)
+            res.download(file);
+        }).catch((err) => {
+            throw err
+        })
     })
 }
 
@@ -394,40 +430,6 @@ const AlarmRoutes = (app) =>{
         alarm.clearMailAlarm(req.body.ID)
     })
 
-    app.get('/getTodaysAlarms/esri',async(req, res)=>{
-        if(req.headers.apikey == 'esriAlarmAPI'){
-            var todayDate = moment().format('L')
-            var yymm = todayDate.split('/')
-            yymm = `${yymm[2]}${yymm[0]}`
-    
-            var getAlarmTable = `Alarm_${yymm}`
-    
-            var alarm = new Alarm(getAlarmTable)
-            let allAlarm = await alarm.getAllLiveAlarm()
-            
-            var todaysDate = new Date().toISOString().split('T')[0]
-            let alarmData = []
-            allAlarm = allAlarm.Items
-            for(var i =0;i<allAlarm.length;i++){
-                var date = allAlarm[i].ts.split(' ')
-                date = date[0]
-                if(date == todaysDate){
-                    allAlarm[i]['sectionArea'] = 'CBM'
-                    alarmData.push(allAlarm[i])
-                }
-            }
-    
-            res.json({
-                'success' : true,
-                'alarms' : alarmData
-            })
-        }else{
-            res.json({
-                'error' : 'Esri Alarm API Key required'
-            })
-        }
-    })
-
     app.get('/getTodaysAlarms/live',async(req, res)=>{
         var todayDate = moment().format('L')
         var yymm = todayDate.split('/')
@@ -455,6 +457,8 @@ const AlarmRoutes = (app) =>{
             'alarms' : alarmData
         })
     })
+    
+    app.get
     app.get('/getTodaysAlarm',async(req, res)=>{
         var type = 'user'
         if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
@@ -1378,5 +1382,6 @@ module.exports = {
     "CompactorRoutes": CompactorRoutes,
     "AlarmRoutes": AlarmRoutes,
     "Login" : Login,
-    "Default" : Default
+    "Default" : Default,
+    "Download" : Download
 }

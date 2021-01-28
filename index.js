@@ -11,7 +11,7 @@ const Mapping_controller = require('./controller/Map_controller')
 app.use(cors())
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
-const { AlarmRoutes, CompactorRoutes, Login, Default} = require('./routes/routes')
+const { AlarmRoutes, CompactorRoutes, Login, Default, Download} = require('./routes/routes')
 
 //onMachine
 
@@ -19,6 +19,7 @@ AlarmRoutes(app)
 CompactorRoutes(app)
 Login(app)
 Default(app)
+Download(app)
 
 app.post('/getFullAddresses',(req, res)=>{
     //return Arr of addressSearchValues
