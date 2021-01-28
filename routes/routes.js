@@ -29,7 +29,10 @@ const Download = (app) => {
             Key: 'blah.json',
             Bucket: 'testingiotdata202023948'
         }
-//mark
+
+        //in charge of generatePDFand Upload
+
+        //in charge of download
         var date = moment().format('L');
         var yymmdd = date.split('/')
         yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
@@ -413,7 +416,7 @@ const AlarmRoutes = (app) =>{
         // to: ['emily.koh@izeem.com','sandee@izeem.com','bernard.leong@izeem.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com'],
         const data = {
             from: 'bernard.pub125147@gmail.com',
-            to: ['emily.koh@izeem.com','sandee@izeem.com','bernardleongqijie@gmail.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com','seahyw@gmail.com'],
+            to: ['emily.koh@izeem.com','bernardleongqijie@gmail.com','seahyw@gmail.com'],
             subject: 'One Alarm Trigger Received',
             html: template
         };
