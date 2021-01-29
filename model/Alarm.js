@@ -101,8 +101,7 @@ class Alarm{
         });
     }
 
-    getAllLiveAlarm(){
-        console.log(tableName)
+    async getAllLiveAlarm(){
         var tableName = this.alarmTable || this.alarmInfoTable 
         var dynamoClient = this.livedocClient
         var params = {

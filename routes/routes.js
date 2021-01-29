@@ -7,6 +7,7 @@ const Alarm = require('./../model/Alarm')
 const Compactor = require('./../model/Compactor')
 const User = require('./../model/User')
 const Authetication = require('./../model/Authetication')
+const Pdf_controller = require('./../controller/Pdf_controller')
 const s3 = new AWS.S3({
     accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
     secretAccessKey: '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'
@@ -24,33 +25,201 @@ const Default = (app) => {
 }
 
 const Download = (app) => {
-    app.get('/generatePDF',async(req, res)=>{
-        var params = {
-            Key: 'blah.json',
-            Bucket: 'testingiotdata202023948'
+    app.get('/generatePDF/:data',async(req, res)=>{
+        //mark
+        var CryptoJS = require("crypto-js");
+        var pdf = require('html-pdf');
+        var now = moment().format('MMMM Do YYYY, h:mm:ss a');
+        var pdfcontroller = new Pdf_controller
+        var sortObjectsArray = require('sort-objects-array');
+        var encrypt = req.params.data
+        var encrypytkey = 'someKey'
+        var bytes  = CryptoJS.AES.decrypt(encrypt, encrypytkey);
+        var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+
+        let dateObj = moment().format('L');
+        var yymm = dateObj.split('/')
+        yymm = `${yymm[2]}${yymm[0]}`
+        var dynamicAlarmTable = `Alarm_${yymm}`
+
+        var alarm = new Alarm(dynamicAlarmTable)
+        var allAlarmInfo = await alarm.getAllLiveAlarm()
+
+        allAlarmInfo = allAlarmInfo.Items
+        var renderAlarms = []
+        for(var i=0;i<allAlarmInfo.length;i++){
+            var ts = allAlarmInfo[i].ts
+            var date = ts.split(" ")
+            date = date[0]
+            if(date >= decryptedData.from && date <= decryptedData.to){
+                renderAlarms.push(allAlarmInfo[i])
+            }
+        }
+        //
+        renderAlarms = sortObjectsArray(renderAlarms, 'ts', {order: 'desc'})
+        renderAlarms = pdfcontroller.chunkArray(renderAlarms , 12)
+        // console.log(renderAlarms)
+
+        for(var blockIndex=0;blockIndex<renderAlarms.length;blockIndex++){
+            var renderAlarmsBlock = renderAlarms[blockIndex]
+            for(var index=0;index<renderAlarmsBlock.length;index++){
+                    var alarm = renderAlarmsBlock[index]
+                    var tableContent = `
+                        <tr>
+                            <td>${alarm.ts}</td>
+                            <td>${alarm.ID}</td>
+                            <td>${alarm.Type}</td>
+                            <td>${alarm.Status}</td>
+                        </tr>
+                    `
+                    renderAlarms[blockIndex][index] = tableContent
+                    // contentPages.push({table: tableContent,pageNo: blockIndex+1})
+            }
         }
 
-        //in charge of generatePDFand Upload
+        for(var blockIndex=0;blockIndex<renderAlarms.length;blockIndex++){
+            var renderAlarmsBlock = renderAlarms[blockIndex]
+            renderAlarmsBlock = renderAlarmsBlock.join('')
+            renderAlarmsBlock = `
+            <table>
+                <tr>
+                    <td>Alarm Trigger Timestamp</td>
+                    <td>Equipment ID</td>
+                    <td>Alarm Type</td>
+                    <td>Fault Type</td>
+                </tr>
+                ${renderAlarmsBlock}
+            </table>`
+            renderAlarms[blockIndex] = renderAlarmsBlock
+        }
 
-        //in charge of download
+        var style = `
+        <head>
+    <meta charset="utf-8" />
+    <style type="text/css" media="screen,print">
+        .new-page {
+            page-break-before: always;
+        }
+
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+            
+        td, th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+        }
+        
+        tr:nth-child(even) {
+        background-color: #dddddd;
+        }
+
+        .faultReportTitle{
+            margin-left: '100em'
+        }
+        .alarmTitle{
+            margin-top: 0.5em;
+            font-size: 2em;
+            text-align: center;
+        }
+        .iZee{
+            color:black;
+        }
+        .Sync{
+            color: #ff0100;
+        }
+    </style>
+</head>
+<body>`
+
+        var title = `<h1 class="alarmTitle">
+        <span class='iZee'>iZee<span class='Sync'>Sync</span></span>
+
+        </h1>
+        <div>&nbsp;</div>
+        `
+        var ReportInfo =  `<div class='faultReportTitle'>
+                    <strong>Equipment Fault Report</strong></div>
+                    <div>&nbsp;</div>
+                    <div>
+                        From: ${decryptedData.from}
+                    </div>
+                    <div>
+                        To: ${decryptedData.to}
+                        </div>
+                        <div>Report Generation Date: ${now}</div>
+                        <div>&nbsp;</div>
+                        <div>&nbsp;</div>
+                    <div>
+                    `
+        
+        var contentPages = [style]
+
+        for(var i=0;i<renderAlarms.length;i++){
+            var alarmTable = renderAlarms[i]
+            if(i == 0){
+                contentPages.push(
+                    `
+                    <div>
+                        ${title}
+                        ${ReportInfo}
+                        ${alarmTable}
+                    </div>
+                    `
+                ) 
+            }else{
+                contentPages.push(
+                    `
+                    <div class="new-page">
+                        <div>&nbsp;</div>
+                        ${title}
+                        ${alarmTable}
+                    </div>
+                    `
+                )
+            }
+        }
+        contentPages.push('</body>')
+        var html = contentPages.join("")
+        // encodeURIComponent()
+        // var data = {"from" : "2021-01-25","to" : "2021-01-25"}
+
+        //in charge of generatePDF and Upload
+        var options = { format: 'Letter' };
+
         var date = moment().format('L');
         var yymmdd = date.split('/')
         yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
-        var fileName = `alarmReportPDF_${yymmdd}.json`
-
+        var fileName = `alarmReportPDF_${yymmdd}.pdf`
+        var generatePDF = await pdfcontroller.generatePDF(pdf,html,options,fileName)
         var file = `${__dirname}/../${fileName}`;
-        fs.unlink(file, (err) => {
-            if (err) {
-              res.json({'error' : err})
-            }
-        })
+        res.download(file);
 
-        s3.getObject(params).promise().then((data) => {
-            writeFile(`./${fileName}`, data.Body)
-            res.download(file);
-        }).catch((err) => {
-            throw err
-        })
+//----end of script------
+
+        //upload to s3
+        // var params = {
+        //     Key: 'blah.json',
+        //     Bucket: 'testingiotdata202023948'
+        // }
+        //in charge of download
+       
+
+        // fs.unlink(file, (err) => {
+        //     if (err) {
+        //       res.json({'error' : err})
+        //     }
+        // })
+
+        // s3.getObject(params).promise().then((data) => {
+        //     writeFile(`./${fileName}`, data.Body)
+        //     res.download(file);
+        // }).catch((err) => {
+        //     throw err
+        // })
     })
 }
 
