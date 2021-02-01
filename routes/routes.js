@@ -44,14 +44,16 @@ const Download = (app) => {
 
         var alarm = new Alarm(dynamicAlarmTable)
         var allAlarmInfo = await alarm.getAllLiveAlarm()
-
         allAlarmInfo = allAlarmInfo.Items
         var renderAlarms = []
         for(var i=0;i<allAlarmInfo.length;i++){
             var ts = allAlarmInfo[i].ts
             var date = ts.split(" ")
             date = date[0]
-            if(date >= decryptedData.from && date <= decryptedData.to){
+            var from_day = decryptedData.from.split('T')
+            from_day = from_day[0]
+            //check date is same day
+            if( (from_day == date || date >= decryptedData.from) && date <= decryptedData.to){
                 renderAlarms.push(allAlarmInfo[i])
             }
         }
@@ -92,6 +94,7 @@ const Download = (app) => {
             </table>`
             renderAlarms[blockIndex] = renderAlarmsBlock
         }
+
 
         var style = `
         <head>
@@ -187,7 +190,7 @@ const Download = (app) => {
         // encodeURIComponent()
         // var data = {"from" : "2021-01-25","to" : "2021-01-25"}
 
-        //in charge of generatePDF and Upload
+        // in charge of generatePDF and Upload
         var options = { format: 'Letter' };
 
         var date = moment().format('L');
