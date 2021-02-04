@@ -23,56 +23,7 @@ class Compactor{
         this.addressTable = 'CompactorAddresses'
         this.compactTable = compactTable
         this.compactInfo = 'CompactorInfo'
-    }
-
-    clearAlarmRaised(compactorID){
-        var docClient = this.docClient
-        var params = {
-            TableName: this.compactInfo,
-            Key:{
-                "compactorID" : compactorID
-            },
-            UpdateExpression: "set alarmRaised = :alarmRaised",
-            ExpressionAttributeValues:{
-                ":alarmRaised": false
-            },
-            ReturnValues:"UPDATED_NEW"
-        };
-        return new Promise((resolve, reject)=>{
-            docClient.update(params, (err, data)=>{
-                if (err) {
-                    reject("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
-                } else {
-                    resolve(data);
-                }
-            });
-        })
-    }
-    
-    addMachine(compactorID, compactorDetails){
-        var tableName = this.compactInfo
-        var docClient = this.docClient
-        var { address, coordinate, type, weight} = compactorDetails
-        var params = {
-            TableName:tableName,
-            Item:{
-                "compactorID": compactorID,
-                "address" : address,
-                "coordinate" : coordinate,
-                "compactorType" : type,
-                "weight" : weight
-            }
-        };
-
-        return new Promise((resolve,reject)=>{
-            docClient.put(params, (err, data)=>{
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(data);
-                }
-            });
-        })
+        this.equipmentInformation = 'EquipmentInformation'
     }
 
     async scanAllLiveCoordinates(){
@@ -139,25 +90,23 @@ class Compactor{
         });
     }
 
-    onMachineOn(compactorID){
-        //machine on ping is received, save record into compactor_YYMMDD
-        var docClient = this.docClient
-        var timestamp = Date.now()
-        var params = {
-            TableName:this.compactTable,
-            Item:{
-                "compactorID": compactorID,
-                "timeStamp" : timestamp,
-                "humanReadableTS" : moment().format('LLLL')
-            }
-        };
+    async scanEquipmentCurrentStatus(){
+        var tableName = this.equipmentInformation
 
-        docClient.put(params, (err, data)=>{
-            if (err) {
-                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
-            } else {
-                console.log("Added item:", JSON.stringify(data, null, 2));
-            }
+        var dynamoClient = this.livedocClient
+        var params = {
+          TableName: tableName, // give it your table name 
+          Select: "ALL_ATTRIBUTES"
+        };
+      
+        return new Promise((resolve, reject)=>{
+            dynamoClient.scan(params, (err, data)=> {
+                if (err) {
+                    reject(err)
+                 } else {
+                    resolve(data.Items)
+                 }
+            })
         });
     }
 
