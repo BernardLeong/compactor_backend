@@ -624,6 +624,21 @@ const AlarmRoutes = (app) =>{
             res.json({'error' : err})
         })
     })
+
+
+    app.get('/AlarmCurrentStatus/live', async(req, res)=>{
+        let compactor = new Compactor
+        let equipments = await compactor.scanEquipmentCurrentStatus()
+        //highly unlikely but still place condition
+        if(equipments.length <= 0){
+            res.json({'error' : 'No Data'})
+        }else{
+            let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, Section }) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, Section }));
+            res.json({
+                'alarmCurrentStatus' : result
+            })
+        }
+    })
 }
 
 const CompactorRoutes = (app) =>{
