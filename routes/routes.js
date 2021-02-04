@@ -900,7 +900,7 @@ const CompactorRoutes = (app) =>{
         if(equipments.length <= 0){
             res.json({'error' : 'No Data'})
         }else{
-            let result = equipments.map(({ WeightInformation, EquipmentID }) => ({WeightInformation, EquipmentID}));
+            let result = equipments.map(({ WeightInformation, EquipmentID, Section }) => ({WeightInformation, EquipmentID, Section}));
             res.json({
                 'compactorCurrentStatus' : result
             })
