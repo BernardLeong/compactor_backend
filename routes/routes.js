@@ -633,7 +633,7 @@ const AlarmRoutes = (app) =>{
         if(equipments.length <= 0){
             res.json({'error' : 'No Data'})
         }else{
-            let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, Section }) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, Section }));
+            let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }));
             res.json({
                 'alarmCurrentStatus' : result
             })
