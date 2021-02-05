@@ -841,6 +841,7 @@ const CompactorRoutes = (app) =>{
     })
 
     app.get('/Alarms/esri',async(req, res)=>{
+        const sortObjectsArray = require('sort-objects-array');
         if(req.headers.apikey == 'esriAlarmAPI'){
             let compactor = new Compactor
             let equipments = await compactor.scanEquipmentCurrentStatus()
@@ -849,9 +850,35 @@ const CompactorRoutes = (app) =>{
                 res.json({'success' : false, 'error' : 'No Data'})
             }else{
                 let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }));
+                var alarmTypes = ['EStop','FireAlarm','GateNotClose','WeightExceedLimit','TransferScrewMotorTrip','WeightExceedLimit','DischargeScrewMotorTrip','BinLifterMotorTrip', 'MotorTrip']
+
+                resultArr = []
+                for(var i=0;i<alarmTypes.length;i++){
+                    var alarmType = alarmTypes[i]
+                    for(var x=0;x<result.length;x++){
+                        var object = {}
+
+                        if( !(!result[x][alarmType] || result[x][alarmType] == {} ) ){
+                            var id = result[x]['EquipmentID']
+                            object["ts"] = result[x][alarmType]['ts']
+                            object["Status"] = result[x][alarmType]['CurrentStatus']
+                            if(id.includes('DS')){
+                                object["EquipmentType"] = 'DS'
+                            }else{
+                                object["EquipmentType"] = 'MM'
+                            }
+                            object["ID"] = result[x]['EquipmentID']
+                            object["Type"] = alarmType
+                            object["sectionArea"] = result[x]['Section']
+                            resultArr.push(object)
+                        }
+                    }
+                }
+
+                resultArr = sortObjectsArray(resultArr, 'ID');
                 res.json({
                     'success' : true,
-                    'alarms' : result
+                    'alarms' : resultArr
                 })
             }
         }else{
@@ -868,6 +895,23 @@ const CompactorRoutes = (app) =>{
                 res.json({'success' : false, 'error' : 'No Data'})
             }else{
                 let result = equipments.map(({ WeightInformation, EquipmentID, Section }) => ({WeightInformation, EquipmentID, Section}));
+                for(var i=0;i<result.length;i++){
+                    var id = result[i]['EquipmentID']
+                    result[i]['sectionArea'] = result[i]['Section']
+                    result[i]['ID'] = result[i]['EquipmentID']
+                    result[i]['FilledLevel-Weight'] = result[i]['WeightInformation']['FilledLevel']
+                    result[i]['Weight'] = result[i]['WeightInformation']['WeightValue']
+                    result[i]['ts'] = result[i]['WeightInformation']['ts'] 
+
+                    if(id.includes('DS')){
+                        result[i]['EquipmentType'] = 'DS'
+                    }else{
+                        result[i]['EquipmentType'] = 'MM'
+                    }
+                    delete result[i]['EquipmentID']
+                    delete result[i]['Section']
+                    delete result[i]['WeightInformation']
+                }
                 res.json({
                     'success' : true,
                     'compactorInfo' : result
