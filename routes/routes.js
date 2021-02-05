@@ -517,7 +517,6 @@ const AlarmRoutes = (app) =>{
         const DOMAIN = process.env.MAILGUN_DOMAIN;
         const api_key = process.env.MAILGUN_API_KEY
         const mg = mailgun({apiKey: api_key, domain: DOMAIN});
-        //mark
         var compactor = new Compactor
         var allCompactorAddresses = await compactor.scanAllLiveCoordinates()
         var address = ''
@@ -624,7 +623,6 @@ const AlarmRoutes = (app) =>{
             res.json({'error' : err})
         })
     })
-
 
     app.get('/AlarmCurrentStatus/live', async(req, res)=>{
         let compactor = new Compactor
@@ -844,52 +842,39 @@ const CompactorRoutes = (app) =>{
 
     app.get('/Alarms/esri',async(req, res)=>{
         if(req.headers.apikey == 'esriAlarmAPI'){
-            var todayDate = moment().format('L')
-            var yymm = todayDate.split('/')
-            yymm = `${yymm[2]}${yymm[0]}`
-    
-            var getAlarmTable = `Alarm_${yymm}`
-    
-            var alarm = new Alarm(getAlarmTable)
-            let allAlarm = await alarm.getAllLiveAlarm()
-            
-            var todaysDate = new Date().toISOString().split('T')[0]
-            let alarmData = []
-            allAlarm = allAlarm.Items
-            for(var i =0;i<allAlarm.length;i++){
-                var date = allAlarm[i].ts.split(' ')
-                date = date[0]
-                if(date == todaysDate){
-                    allAlarm[i]['sectionArea'] = 'CBM'
-                    alarmData.push(allAlarm[i])
-                }
+            let compactor = new Compactor
+            let equipments = await compactor.scanEquipmentCurrentStatus()
+            //highly unlikely but still place condition
+            if(equipments.length <= 0){
+                res.json({'success' : false, 'error' : 'No Data'})
+            }else{
+                let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }));
+                res.json({
+                    'success' : true,
+                    'alarms' : result
+                })
             }
-    
-            res.json({
-                'success' : true,
-                'alarms' : alarmData
-            })
         }else{
-            res.json({'error' : 'Esri Alarm API key required'})
+            res.json({'success' : false, 'error' : 'Esri Alarm API key required'})
         }
     })
 
     app.get('/Compactor/esri', async(req, res)=>{
         if(req.headers.apikey == 'esriCompactorAPI'){
-            let dateObj = moment().format('L');
-            var yymmdd = dateObj.split('/')
-            yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
-            var tableName = `Compactor_${yymmdd}`
-            // tableName = `Compactor_20210102`
-            let compactor = new Compactor(tableName)
-            var allCompactInfo = compactor.scanAllLiveCompactor()
-            allCompactInfo.then((result)=>{
-                res.json({'compactorInfo' : result})
-            }).catch((err)=>{
-                console.log(err)
-            })
+            let compactor = new Compactor
+            let equipments = await compactor.scanEquipmentCurrentStatus()
+            //highly unlikely but still place condition
+            if(equipments.length <= 0){
+                res.json({'success' : false, 'error' : 'No Data'})
+            }else{
+                let result = equipments.map(({ WeightInformation, EquipmentID, Section }) => ({WeightInformation, EquipmentID, Section}));
+                res.json({
+                    'success' : true,
+                    'compactorInfo' : result
+                })
+            }
         }else{
-            res.json({'error' : 'Esri Compactor API key required'})
+            res.json({'success' : false, 'error' : 'Esri Compactor API key required'})
         }
     })
 
