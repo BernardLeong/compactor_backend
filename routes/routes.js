@@ -632,7 +632,7 @@ const AlarmRoutes = (app) =>{
             if(equipments.length <= 0){
                 res.json({'success' : false, 'error' : 'No Data'})
             }else{
-                let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates}) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates }));
+                let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates, address}) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates , address}));
                 var alarmTypes = ['EStop','FireAlarm','GateNotClose','WeightExceedLimit','TransferScrewMotorTrip','WeightExceedLimit','DischargeScrewMotorTrip','BinLifterMotorTrip', 'MotorTrip']
 
                 resultArr = []
@@ -958,7 +958,7 @@ const CompactorRoutes = (app) =>{
         if(equipments.length <= 0){
             res.json({'success' : false, 'error' : 'No Data'})
         }else{
-            let result = equipments.map(({ WeightInformation, EquipmentID, Section, coordinates }) => ({WeightInformation, EquipmentID, Section, coordinates}));
+            let result = equipments.map(({ WeightInformation, EquipmentID, Section, coordinates , address }) => ({WeightInformation, EquipmentID, Section, coordinates, address}));
             for(var i=0;i<result.length;i++){
                 console.log([result[i]['WeightInformation'], result[i]['EquipmentID']])
                 result[i]['FilledLevel'] = result[i]['WeightInformation']['FilledLevel']
