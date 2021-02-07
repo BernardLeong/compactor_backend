@@ -652,6 +652,7 @@ const AlarmRoutes = (app) =>{
                             // }
                             object["EquipmentID"] = id
                             object["Type"] = alarmType
+                            object["Section"] = result[x]['Section']
                             resultArr.push(object)
                         }
                     }
