@@ -632,7 +632,7 @@ const AlarmRoutes = (app) =>{
             if(equipments.length <= 0){
                 res.json({'success' : false, 'error' : 'No Data'})
             }else{
-                let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }));
+                let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates}) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates }));
                 var alarmTypes = ['EStop','FireAlarm','GateNotClose','WeightExceedLimit','TransferScrewMotorTrip','WeightExceedLimit','DischargeScrewMotorTrip','BinLifterMotorTrip', 'MotorTrip']
 
                 resultArr = []
@@ -958,11 +958,12 @@ const CompactorRoutes = (app) =>{
         if(equipments.length <= 0){
             res.json({'success' : false, 'error' : 'No Data'})
         }else{
-            let result = equipments.map(({ WeightInformation, EquipmentID, Section }) => ({WeightInformation, EquipmentID, Section}));
+            let result = equipments.map(({ WeightInformation, EquipmentID, Section, coordinates }) => ({WeightInformation, EquipmentID, Section, coordinates}));
             for(var i=0;i<result.length;i++){
                 console.log([result[i]['WeightInformation'], result[i]['EquipmentID']])
                 result[i]['FilledLevel'] = result[i]['WeightInformation']['FilledLevel']
                 result[i]['WeightValue'] = result[i]['WeightInformation']['WeightValue']
+                result[i]['ts'] = result[i]['WeightInformation']['ts'] 
                 result[i]['ts'] = result[i]['WeightInformation']['ts'] 
             
                 if(result[i]['WeightInformation']['FilledLevel'] < 0){
