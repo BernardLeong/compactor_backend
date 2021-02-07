@@ -625,17 +625,44 @@ const AlarmRoutes = (app) =>{
     })
 
     app.get('/AlarmCurrentStatus/live', async(req, res)=>{
+        const sortObjectsArray = require('sort-objects-array');
         let compactor = new Compactor
-        let equipments = await compactor.scanEquipmentCurrentStatus()
-        //highly unlikely but still place condition
-        if(equipments.length <= 0){
-            res.json({'error' : 'No Data'})
-        }else{
-            let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }));
-            res.json({
-                'alarmCurrentStatus' : result
-            })
-        }
+            let equipments = await compactor.scanEquipmentCurrentStatus()
+            //highly unlikely but still place condition
+            if(equipments.length <= 0){
+                res.json({'success' : false, 'error' : 'No Data'})
+            }else{
+                let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }));
+                var alarmTypes = ['EStop','FireAlarm','GateNotClose','WeightExceedLimit','TransferScrewMotorTrip','WeightExceedLimit','DischargeScrewMotorTrip','BinLifterMotorTrip', 'MotorTrip']
+
+                resultArr = []
+                for(var i=0;i<alarmTypes.length;i++){
+                    var alarmType = alarmTypes[i]
+                    for(var x=0;x<result.length;x++){
+                        var object = {}
+
+                        if( !(!result[x][alarmType] || result[x][alarmType] == {} ) ){
+                            var id = result[x]['EquipmentID']
+                            object["ts"] = result[x][alarmType]['ts']
+                            object["CurrentStatus"] = result[x][alarmType]['CurrentStatus']
+                            // if(id.includes('DS')){
+                            //     object["EquipmentType"] = 'DS'
+                            // }else{
+                            //     object["EquipmentType"] = 'MM'
+                            // }
+                            object["EquipmentID"] = id
+                            object["Type"] = alarmType
+                            resultArr.push(object)
+                        }
+                    }
+                }
+
+                resultArr = sortObjectsArray(resultArr, 'EquipmentID');
+                res.json({
+                    'success' : true,
+                    'alarms' : resultArr
+                })
+            }
     })
 }
 
@@ -922,31 +949,49 @@ const CompactorRoutes = (app) =>{
         }
     })
 
-    app.get('/allCompactorInfos/live', async(req, res)=>{
-        let dateObj = moment().format('L');
-        var yymmdd = dateObj.split('/')
-        yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
-        var tableName = `Compactor_${yymmdd}`
-        // tableName = `Compactor_20210102`
-        let compactor = new Compactor(tableName)
-        var allCompactInfo = compactor.scanAllLiveCompactor()
-        allCompactInfo.then((result)=>{
-            res.json({'compactorInfo' : result})
-        }).catch((err)=>{
-            console.log(err)
-        })
-    })
-
     app.get('/CompactorCurrentStatus/live', async(req, res)=>{
+        const sortObjectsArray = require('sort-objects-array');
         let compactor = new Compactor
         let equipments = await compactor.scanEquipmentCurrentStatus()
         //highly unlikely but still place condition
         if(equipments.length <= 0){
-            res.json({'error' : 'No Data'})
+            res.json({'success' : false, 'error' : 'No Data'})
         }else{
             let result = equipments.map(({ WeightInformation, EquipmentID, Section }) => ({WeightInformation, EquipmentID, Section}));
+            for(var i=0;i<result.length;i++){
+                console.log([result[i]['WeightInformation'], result[i]['EquipmentID']])
+                result[i]['FilledLevel'] = result[i]['WeightInformation']['FilledLevel']
+                result[i]['WeightValue'] = result[i]['WeightInformation']['WeightValue']
+                result[i]['ts'] = result[i]['WeightInformation']['ts'] 
+            
+                if(result[i]['WeightInformation']['FilledLevel'] < 0){
+                    result[i]['FilledLevel'] = "0"
+                    result[i]['WeightValue'] = "0"
+                }
+
+                if(result[i]['WeightInformation']['WeightValue'] < 0){
+                    result[i]['FilledLevel'] = "0"
+                    result[i]['WeightValue'] = "0"
+                }
+
+                if(!result[i]['WeightInformation']['ts']){
+                    result[i]['FilledLevel'] = "0"
+                    result[i]['WeightValue'] = "0"
+                    result[i]['ts'] = ""
+                }
+
+                // if(id.includes('DS')){
+                //     result[i]['EquipmentType'] = 'DS'
+                // }else{
+                //     result[i]['EquipmentType'] = 'MM'
+                // }
+                delete result[i]['WeightInformation']
+            }
+
+            result = sortObjectsArray(result, 'EquipmentID')
             res.json({
-                'compactorCurrentStatus' : result
+                'success' : true,
+                'compactorInfo' : result
             })
         }
     })
