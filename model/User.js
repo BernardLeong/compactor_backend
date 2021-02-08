@@ -11,6 +11,13 @@ class User{
                 secretAccessKey: 'iu7hqUTr0EYWGwyzNpE2L8itWgdepyXzUZOc3J1N'
             }
         ),
+        this.livedocClient = new AWS.DynamoDB.DocumentClient(
+            {
+                region: 'ap-southeast-1',
+                accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
+                secretAccessKey: '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'
+            }
+        ),
         this.userTable = 'user',
         this.engineerTable = 'serviceUser',
         this.adminTable = 'adminUser',
@@ -226,10 +233,6 @@ class User{
         });
     }
 
-    getUser(){
-
-    }
-
     getdynamicTable(type){
         if(type == 'user'){
             var tableName = this.userTable
@@ -288,6 +291,26 @@ class User{
         }else{
             return false;
         }
+    }
+
+    async emailRecipients(){
+        var tableName = 'EmailRecipients'
+
+        var dynamoClient = this.livedocClient
+        var params = {
+          TableName: tableName, // give it your table name 
+          Select: "ALL_ATTRIBUTES"
+        };
+      
+        return new Promise((resolve, reject)=>{
+            dynamoClient.scan(params, (err, data)=> {
+                if (err) {
+                    reject(err)
+                 } else {
+                    resolve(data.Items)
+                 }
+            })
+        });
     }
 
     encryptPassword(password){

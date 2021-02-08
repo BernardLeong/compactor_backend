@@ -561,10 +561,15 @@ const AlarmRoutes = (app) =>{
             <div>Location: ${address}</div> 
             `
         }
-        // to: ['emily.koh@izeem.com','bernardleongqijie@gmail.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com', ''],
+
+        let user = new User;
+        var emailRecipients = await user.emailRecipients()
+        emailRecipients = emailRecipients.map(el => el.mailingAddress)
+
+        // to: ['emily.koh@izeem.com','bernardleongqijie@gmail.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com','seahyw@gmail.com'],
         const data = {
             from: 'bernard.pub125147@gmail.com',
-            to: ['emily.koh@izeem.com','bernardleongqijie@gmail.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com','seahyw@gmail.com'],
+            to: emailRecipients,
             subject: 'One Alarm Trigger Received',
             html: template
         };
@@ -658,7 +663,7 @@ const AlarmRoutes = (app) =>{
                     }
                 }
 
-                resultArr = sortObjectsArray(resultArr, 'EquipmentID');
+                resultArr = sortObjectsArray(resultArr, 'ts', {order: 'desc'});
                 res.json({
                     'success' : true,
                     'alarms' : resultArr
