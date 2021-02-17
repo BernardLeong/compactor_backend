@@ -2,6 +2,7 @@ const moment = require('moment')
 const AWS = require('aws-sdk')
 const fs = require('fs')
 const util = require('util')
+const CryptoJS = require("crypto-js");
 const writeFile = util.promisify(fs.writeFile)
 const Alarm = require('./../model/Alarm')
 const Compactor = require('./../model/Compactor')
@@ -369,6 +370,117 @@ const Login = (app) => {
 }
 
 const AlarmRoutes = (app) =>{
+
+    app.get('/getAlarmReport/:ciphertext',async(req, res)=>{
+        //markReport
+        // U2FsdGVkX19m7%2FGnx%2FxtjSe1I21IdJa6kwnhdIN%2BSih9qm0bV4ziADVIivBvGfrfJKwJaqVwRtiJEsPsP7LcybJ23QzksxupQFJs4xKVswFea6g1cHp4o9Se9OUKyAB6
+        var type = 'user'
+        if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
+            type = 'admin'
+        }
+
+        if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
+            type = 'serviceUser'
+        }
+        
+        var accesstoken = null
+        if(req.headers.authorization){
+            var token = req.headers.authorization.split(' ')
+            if(token[0] == 'Bearer'){
+                accesstoken = token[1]
+            }else{
+                res.json({
+                    'success' : false,
+                    'error' : 'Please use bearer token to log in'
+                })
+            }
+        }
+        if(accesstoken){
+            let auth = new Authetication
+            let checktoken = await auth.checkToken(accesstoken, type)
+            if(checktoken <= 0){
+                res.json({
+                    'success' : false,
+                    'error' : 'Invalid token'
+                })
+            }else{
+                //content in here
+                //decrypt time
+                var ciphertext = req.params.ciphertext
+                var bytes  = CryptoJS.AES.decrypt(ciphertext, 'someKey');
+                var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+                //get all yyddmm
+                // var mom = moment(decryptedData.from, "YYYYMMDD")
+                var fromDate = decryptedData.from
+                fromDate = moment(fromDate).format('L');
+                var fromyymmdd = fromDate.split('/')
+                var toDate = decryptedData.to
+                toDate = moment(toDate).format('L');
+                var toyymmdd = toDate.split('/')
+                // toyymmdd = `${toyymmdd[2]}${toyymmdd[0]}${toyymmdd[1]}`
+
+
+                //find out the range of months and years
+                //range from year first
+                
+                var toYear = parseInt(toyymmdd[2]) 
+                var fromYear = parseInt(fromyymmdd[2]) 
+                var toMonth = parseInt(toyymmdd[0]) 
+                var fromMonth = parseInt(fromyymmdd[0]) 
+
+                var dateRange = [`Alarm_${fromYear}${fromMonth}`]
+
+                var numberOfMonths = (toYear - fromYear) * 12 + (toMonth - fromMonth);
+
+                for(var i=0;i<numberOfMonths;i++){
+                    if(fromMonth % 12 == 0){
+                        fromMonth = 1
+                        var currentMonth = fromMonth
+                        var currentYear = fromYear += 1
+                    }else{
+                        var currentMonth = fromMonth += 1
+                        var currentYear = fromYear
+                    }
+
+                    if(currentMonth < 10){
+                        dateRange.push(`Alarm_${currentYear}0${currentMonth}`)
+                    }else{
+                        dateRange.push(`Alarm_${currentYear}${currentMonth}`)
+                    }
+                }
+
+                console.log(dateRange)
+
+
+                var alarmdata = []
+                //get all the data from the date range
+                for(var i=0;i<dateRange.length;i++){
+                    var tableName = dateRange[i]
+                    var alarm = new Alarm(tableName)
+                    var alarmData = await alarm.getAllLiveAlarm()
+                    alarmdata.push(alarmData.Items)
+                }
+
+                alarmdata = alarmdata.flat()
+                var alarmdataCopy = []
+                for(var i=0;i<alarmdata.length;i++){
+                    if(typeof alarmdata[i] !== 'undefined' && alarmdata[i].Status == 'Cleared' && alarmdata[i].ClearedTS){
+                        alarmdataCopy.push(alarmdata[i])
+                    }
+                }
+
+                alarmdata = alarmdataCopy
+
+                res.json({'data' : alarmdata})
+            }
+        }else{
+            res.json({
+                'success' : false,
+                'error' : 'Please log in first'
+            })
+        }
+    })
+
     app.get('/getDetailAlarm',async(req, res)=>{
         var type = 'user'
         if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){

@@ -102,7 +102,7 @@ class Alarm{
     }
 
     async getAllLiveAlarm(){
-        var tableName = this.alarmTable || this.alarmInfoTable 
+        var tableName = this.alarmTable
         var dynamoClient = this.livedocClient
         var params = {
           TableName: tableName, // give it your table name 
@@ -112,7 +112,7 @@ class Alarm{
         return new Promise((resolve, reject)=>{
             dynamoClient.scan(params, (err, data)=> {
                 if (err) {
-                    reject(err)
+                    resolve(err)
                  } else {
                     resolve(data)
                  }
