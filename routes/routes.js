@@ -3,6 +3,7 @@ const AWS = require('aws-sdk')
 const fs = require('fs')
 const util = require('util')
 const CryptoJS = require("crypto-js");
+const sortObjectsArray = require('sort-objects-array');
 const writeFile = util.promisify(fs.writeFile)
 const Alarm = require('./../model/Alarm')
 const Compactor = require('./../model/Compactor')
@@ -372,8 +373,6 @@ const Login = (app) => {
 const AlarmRoutes = (app) =>{
 
     app.get('/getAlarmReport/:ciphertext',async(req, res)=>{
-        //markReport
-        // U2FsdGVkX19m7%2FGnx%2FxtjSe1I21IdJa6kwnhdIN%2BSih9qm0bV4ziADVIivBvGfrfJKwJaqVwRtiJEsPsP7LcybJ23QzksxupQFJs4xKVswFea6g1cHp4o9Se9OUKyAB6
         var type = 'user'
         if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
             type = 'admin'
@@ -409,19 +408,14 @@ const AlarmRoutes = (app) =>{
                 var ciphertext = req.params.ciphertext
                 var bytes  = CryptoJS.AES.decrypt(ciphertext, 'someKey');
                 var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-                //get all yyddmm
-                // var mom = moment(decryptedData.from, "YYYYMMDD")
+
+                
                 var fromDate = decryptedData.from
                 fromDate = moment(fromDate).format('L');
                 var fromyymmdd = fromDate.split('/')
                 var toDate = decryptedData.to
                 toDate = moment(toDate).format('L');
                 var toyymmdd = toDate.split('/')
-                // toyymmdd = `${toyymmdd[2]}${toyymmdd[0]}${toyymmdd[1]}`
-
-
-                //find out the range of months and years
-                //range from year first
                 
                 var toYear = parseInt(toyymmdd[2]) 
                 var fromYear = parseInt(fromyymmdd[2]) 
@@ -486,7 +480,6 @@ const AlarmRoutes = (app) =>{
                     if(days < 1){
                         days = 0
                     }
-
                     
                     if(days){
                         hours = hours - (days * 24)
@@ -520,12 +513,16 @@ const AlarmRoutes = (app) =>{
                             time_difference = `${minutes} minutes`
                         }
                     }
-
+                    alarmdata[i]['EquipmentID'] = alarmdata[i]['ID']
+                    alarmdata[i]['EquipmentType'] = alarmdata[i]['Type']
                     alarmdata[i]['timeDifference'] = time_difference
 
+                    delete(alarmdata[i]['ID'])
+                    delete(alarmdata[i]['EquipmentType'])
                 }
                 //add in time difference
-
+//markReport
+                alarmdata = sortObjectsArray(alarmdata, 'ts')
                 res.json({'data' : alarmdata})
             }
         }else{
@@ -797,7 +794,7 @@ const AlarmRoutes = (app) =>{
     })
 
     app.get('/AlarmCurrentStatus/live', async(req, res)=>{
-        const sortObjectsArray = require('sort-objects-array');
+        
         let compactor = new Compactor
             let equipments = await compactor.scanEquipmentCurrentStatus()
             //highly unlikely but still place condition
