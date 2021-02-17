@@ -101,6 +101,13 @@ class Alarm{
         });
     }
 
+    time_difference(later, earlier) 
+    {
+        var diff =(later.getTime() - earlier.getTime()) / 1000;
+        diff /= 60;
+        return Math.abs(Math.round(diff));
+    }
+
     async getAllLiveAlarm(){
         var tableName = this.alarmTable
         var dynamoClient = this.livedocClient
