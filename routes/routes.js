@@ -406,43 +406,57 @@ const AlarmRoutes = (app) =>{
                 //content in here
                 //decrypt time
                 var ciphertext = req.params.ciphertext
-                var bytes  = CryptoJS.AES.decrypt(ciphertext, 'someKey');
-                var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
 
-                
-                var fromDate = decryptedData.from
-                fromDate = moment(fromDate).format('L');
-                var fromyymmdd = fromDate.split('/')
-                var toDate = decryptedData.to
-                toDate = moment(toDate).format('L');
-                var toyymmdd = toDate.split('/')
-                
-                var toYear = parseInt(toyymmdd[2]) 
-                var fromYear = parseInt(fromyymmdd[2]) 
-                var toMonth = parseInt(toyymmdd[0]) 
-                var fromMonth = parseInt(fromyymmdd[0]) 
-
-                var dateRange = [`Alarm_${fromYear}${fromMonth}`]
-
-                var numberOfMonths = (toYear - fromYear) * 12 + (toMonth - fromMonth);
-
-                for(var i=0;i<numberOfMonths;i++){
-                    if(fromMonth % 12 == 0){
-                        fromMonth = 1
-                        var currentMonth = fromMonth
-                        var currentYear = fromYear += 1
-                    }else{
-                        var currentMonth = fromMonth += 1
-                        var currentYear = fromYear
+                if(ciphertext == 'all'){
+                    var alarm = new Alarm
+                    var tablesAll = await alarm.readAllTables()
+                    tablesAll = tablesAll.TableNames
+                    var dateRange = []
+                    for(var i=0;i<tablesAll.length;i++){
+                        if(tablesAll[i].includes('Alarm_2')){
+                            dateRange.push(tablesAll[i])
+                        }
                     }
-
-                    if(currentMonth < 10){
-                        dateRange.push(`Alarm_${currentYear}0${currentMonth}`)
-                    }else{
-                        dateRange.push(`Alarm_${currentYear}${currentMonth}`)
+                }else{
+                    var bytes  = CryptoJS.AES.decrypt(ciphertext, 'someKey');
+                    var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    
+                    
+                    var fromDate = decryptedData.from
+                    fromDate = moment(fromDate).format('L');
+                    var fromyymmdd = fromDate.split('/')
+                    var toDate = decryptedData.to
+                    toDate = moment(toDate).format('L');
+                    var toyymmdd = toDate.split('/')
+                    
+                    var toYear = parseInt(toyymmdd[2]) 
+                    var fromYear = parseInt(fromyymmdd[2]) 
+                    var toMonth = parseInt(toyymmdd[0]) 
+                    var fromMonth = parseInt(fromyymmdd[0]) 
+    
+                    var dateRange = [`Alarm_${fromYear}${fromMonth}`]
+    
+                    var numberOfMonths = (toYear - fromYear) * 12 + (toMonth - fromMonth);
+    
+                    for(var i=0;i<numberOfMonths;i++){
+                        if(fromMonth % 12 == 0){
+                            fromMonth = 1
+                            var currentMonth = fromMonth
+                            var currentYear = fromYear += 1
+                        }else{
+                            var currentMonth = fromMonth += 1
+                            var currentYear = fromYear
+                        }
+    
+                        if(currentMonth < 10){
+                            dateRange.push(`Alarm_${currentYear}0${currentMonth}`)
+                        }else{
+                            dateRange.push(`Alarm_${currentYear}${currentMonth}`)
+                        }
                     }
                 }
 
+                console.log(dateRange)
                 var alarmdata = []
                 //get all the data from the date range
                 for(var i=0;i<dateRange.length;i++){

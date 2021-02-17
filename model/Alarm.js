@@ -4,6 +4,15 @@ const env = require('dotenv').config()
 class Alarm{
 
     constructor(alarmTable){
+
+        this.liveDynamo = new AWS.DynamoDB(
+            {
+                region: 'ap-southeast-1',
+                accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
+                secretAccessKey: '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'
+            }
+        );
+
         this.docClient = new AWS.DynamoDB.DocumentClient(
             {
                 region: process.env.REGION,
@@ -106,6 +115,16 @@ class Alarm{
         var diff =(later.getTime() - earlier.getTime()) / 1000;
         diff /= 60;
         return Math.abs(Math.round(diff));
+    }
+
+    async readAllTables(){
+        let dynamo = this.liveDynamo
+        return new Promise((resolve, reject) => {
+            dynamo.listTables({} , (err, data) => {
+                if(err) reject(err);
+                else resolve(data);
+            })
+        })
     }
 
     async getAllLiveAlarm(){
