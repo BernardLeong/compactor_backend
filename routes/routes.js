@@ -67,6 +67,10 @@ const Download = (app) => {
             ts = ts.split(' ')
             renderAlarms[i]['timestampday'] = ts[0]
             renderAlarms[i]['timestamptime'] = ts[1]
+            var clearts = renderAlarm.ClearedTS
+            clearts = clearts.split(' ')
+            renderAlarms[i]['cleartimestampday'] = clearts[0]
+            renderAlarms[i]['cleartimestamptime'] = clearts[1]
         }
         renderAlarms = sortObjectsArray(renderAlarms, 'ts', {order: 'desc'})
         renderAlarms = pdfcontroller.chunkArray(renderAlarms , 8)
@@ -79,8 +83,10 @@ const Download = (app) => {
                     var alarm = renderAlarmsBlock[index]
                     var tableContent = `
                         <tr>
+                        <td style="text-align: center">${alarm.ID}</td>
                             <td style="text-align: center"><div>${alarm.timestampday}</div><div>${alarm.timestamptime}</div></td>
-                            <td style="text-align: center">${alarm.ID}</td>
+                            <td style="text-align: center"><div>${alarm.cleartimestampday}</div><div>${alarm.cleartimestamptime}</div></td>
+                            <td style="text-align: center">${alarm.timeDifference}</td>
                             <td style="text-align: center">${alarm.Type}</td>
                             <td style="text-align: center">${alarm.Status}</td>
                         </tr>
@@ -96,8 +102,10 @@ const Download = (app) => {
             renderAlarmsBlock = `
             <table>
                 <tr>
+                <td style="text-align: center">Equipment ID</td>
                     <td style="text-align: center">Alarm Trigger Timestamp</td>
-                    <td style="text-align: center">Equipment ID</td>
+                    <td style="text-align: center">Alarm Clear Timestamp</td>
+                    <td style="text-align: center">Time Difference</td>
                     <td style="text-align: center">Alarm Type</td>
                     <td style="text-align: center">Fault Type</td>
                 </tr>
