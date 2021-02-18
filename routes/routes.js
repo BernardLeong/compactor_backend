@@ -372,7 +372,7 @@ const Login = (app) => {
 
 const AlarmRoutes = (app) =>{
 
-    app.get('/getAlarmReport/:ciphertext',async(req, res)=>{
+    app.get('/getAlarmReport/all',async(req, res)=>{
         var type = 'user'
         if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
             type = 'admin'
@@ -406,60 +406,15 @@ const AlarmRoutes = (app) =>{
                 //content in here
                 //decrypt time
                 var ciphertext = req.params.ciphertext
-
-                if(ciphertext == 'all'){
-                    var alarm = new Alarm
-                    var tablesAll = await alarm.readAllTables()
-                    tablesAll = tablesAll.TableNames
-                    var dateRange = []
-                    for(var i=0;i<tablesAll.length;i++){
-                        if(tablesAll[i].includes('Alarm_2')){
-                            dateRange.push(tablesAll[i])
-                        }
-                    }
-                }else{
-                    var bytes  = CryptoJS.AES.decrypt(ciphertext, 'someKey');
-                    var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-    
-                    var fromDate = decryptedData.from
-                    var from_day = fromDate.split('T')
-                    from_day = from_day[0]
-                    fromDate = moment(fromDate).format('L');
-                    var fromyymmdd = fromDate.split('/')
-                    var toDate = decryptedData.to
-                    var to_day = toDate.split('T')
-                    to_day = to_day[0]
-                    toDate = moment(toDate).format('L');
-                    var toyymmdd = toDate.split('/')
-                    
-                    var toYear = parseInt(toyymmdd[2]) 
-                    var fromYear = parseInt(fromyymmdd[2]) 
-                    var toMonth = parseInt(toyymmdd[0]) 
-                    var fromMonth = parseInt(fromyymmdd[0]) 
-    
-                    var dateRange = [`Alarm_${fromYear}${fromMonth}`]
-    
-                    var numberOfMonths = (toYear - fromYear) * 12 + (toMonth - fromMonth);
-    
-                    for(var i=0;i<numberOfMonths;i++){
-                        if(fromMonth % 12 == 0){
-                            fromMonth = 1
-                            var currentMonth = fromMonth
-                            var currentYear = fromYear += 1
-                        }else{
-                            var currentMonth = fromMonth += 1
-                            var currentYear = fromYear
-                        }
-    
-                        if(currentMonth < 10){
-                            dateRange.push(`Alarm_${currentYear}0${currentMonth}`)
-                        }else{
-                            dateRange.push(`Alarm_${currentYear}${currentMonth}`)
-                        }
+                var alarm = new Alarm
+                var tablesAll = await alarm.readAllTables()
+                tablesAll = tablesAll.TableNames
+                var dateRange = []
+                for(var i=0;i<tablesAll.length;i++){
+                    if(tablesAll[i].includes('Alarm_2')){
+                        dateRange.push(tablesAll[i])
                     }
                 }
-
-
                 var alarmdata = []
                 //get all the data from the date range
                 for(var i=0;i<dateRange.length;i++){
@@ -538,20 +493,7 @@ const AlarmRoutes = (app) =>{
                     delete(alarmdata[i]['EquipmentType'])
                 }
                 //add in time difference
-//markReport
-                if(ciphertext !== 'all'){
-                    for(var i=0;i<alarmdata.length;i++){
-                        var ts = alarmdata[i].ts
-                        ts_day = ts.split(' ')
-                        ts_day = ts_day[0]
-                        if(from_day <= ts_day && to_day >= ts_day){
-                            alarmdataCopy.push(alarmdata[i])
-                        }
-                    }
-                    alarmdata = alarmdataCopy
-                    alarmdataCopy = []
-                }
-                
+//markReport                
                 alarmdata = sortObjectsArray(alarmdata, 'ts')
                 res.json({'data' : alarmdata})
             }
