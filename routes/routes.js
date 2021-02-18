@@ -29,7 +29,7 @@ const Default = (app) => {
 
 const Download = (app) => {
     app.get('/generatePDF/:data',async(req, res)=>{
-        //mark
+        //markb
         var CryptoJS = require("crypto-js");
         var pdf = require('html-pdf');
         var now = moment().format('MMMM Do YYYY, h:mm:ss a');
@@ -39,28 +39,8 @@ const Download = (app) => {
         var encrypytkey = 'someKey'
         var bytes  = CryptoJS.AES.decrypt(encrypt, encrypytkey);
         var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-
-        let dateObj = moment().format('L');
-        var yymm = dateObj.split('/')
-        yymm = `${yymm[2]}${yymm[0]}`
-        var dynamicAlarmTable = `Alarm_${yymm}`
-
-        var alarm = new Alarm(dynamicAlarmTable)
-        var allAlarmInfo = await alarm.getAllLiveAlarm()
-        allAlarmInfo = allAlarmInfo.Items
-        var renderAlarms = []
-        for(var i=0;i<allAlarmInfo.length;i++){
-            var ts = allAlarmInfo[i].ts
-            var date = ts.split(" ")
-            date = date[0]
-            var from_day = decryptedData.from.split('T')
-            from_day = from_day[0]
-            //check date is same day
-            if( (from_day == date || date >= decryptedData.from) && date <= decryptedData.to){
-                renderAlarms.push(allAlarmInfo[i])
-            }
-        }
-        //
+        decryptedData = decryptedData['data']
+        var renderAlarms = decryptedData
         for(var i=0;i<renderAlarms.length;i++){
             var renderAlarm = renderAlarms[i]
             var ts = renderAlarm.ts
@@ -68,13 +48,17 @@ const Download = (app) => {
             renderAlarms[i]['timestampday'] = ts[0]
             renderAlarms[i]['timestamptime'] = ts[1]
             var clearts = renderAlarm.ClearedTS
-            clearts = clearts.split(' ')
-            renderAlarms[i]['cleartimestampday'] = clearts[0]
-            renderAlarms[i]['cleartimestamptime'] = clearts[1]
+            if(typeof(clearts) == 'undefined'){
+                renderAlarms[i]['cleartimestampday'] = ''
+                renderAlarms[i]['cleartimestamptime'] = ''
+            }else{
+                clearts = clearts.split(' ')
+                renderAlarms[i]['cleartimestampday'] = clearts[0]
+                renderAlarms[i]['cleartimestamptime'] = clearts[1]
+            }
         }
         renderAlarms = sortObjectsArray(renderAlarms, 'ts', {order: 'desc'})
         renderAlarms = pdfcontroller.chunkArray(renderAlarms , 8)
-        // console.log(renderAlarms)
 
         for(var blockIndex=0;blockIndex<renderAlarms.length;blockIndex++){
             var renderAlarmsBlock = renderAlarms[blockIndex]
@@ -83,7 +67,7 @@ const Download = (app) => {
                     var alarm = renderAlarmsBlock[index]
                     var tableContent = `
                         <tr>
-                        <td style="text-align: center">${alarm.ID}</td>
+                        <td style="text-align: center">${alarm.EquipmentID}</td>
                             <td style="text-align: center"><div>${alarm.timestampday}</div><div>${alarm.timestamptime}</div></td>
                             <td style="text-align: center"><div>${alarm.cleartimestampday}</div><div>${alarm.cleartimestamptime}</div></td>
                             <td style="text-align: center">${alarm.timeDifference}</td>
@@ -423,7 +407,6 @@ const AlarmRoutes = (app) =>{
             }else{
                 //content in here
                 //decrypt time
-                var ciphertext = req.params.ciphertext
                 var alarm = new Alarm
                 var tablesAll = await alarm.readAllTables()
                 tablesAll = tablesAll.TableNames
