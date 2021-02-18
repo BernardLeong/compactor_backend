@@ -79,10 +79,10 @@ const Download = (app) => {
                     var alarm = renderAlarmsBlock[index]
                     var tableContent = `
                         <tr>
-                            <td><div>${alarm.timestampday}</div><div>${alarm.timestamptime}</div></td>
-                            <td>${alarm.ID}</td>
-                            <td>${alarm.Type}</td>
-                            <td>${alarm.Status}</td>
+                            <td style="text-align: center"><div>${alarm.timestampday}</div><div>${alarm.timestamptime}</div></td>
+                            <td style="text-align: center">${alarm.ID}</td>
+                            <td style="text-align: center">${alarm.Type}</td>
+                            <td style="text-align: center">${alarm.Status}</td>
                         </tr>
                     `
                     renderAlarms[blockIndex][index] = tableContent
@@ -96,10 +96,10 @@ const Download = (app) => {
             renderAlarmsBlock = `
             <table>
                 <tr>
-                    <td>Alarm Trigger Timestamp</td>
-                    <td>Equipment ID</td>
-                    <td>Alarm Type</td>
-                    <td>Fault Type</td>
+                    <td style="text-align: center">Alarm Trigger Timestamp</td>
+                    <td style="text-align: center">Equipment ID</td>
+                    <td style="text-align: center">Alarm Type</td>
+                    <td style="text-align: center">Fault Type</td>
                 </tr>
                 ${renderAlarmsBlock}
             </table>`
