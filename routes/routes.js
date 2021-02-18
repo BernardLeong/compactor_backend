@@ -421,11 +421,14 @@ const AlarmRoutes = (app) =>{
                     var bytes  = CryptoJS.AES.decrypt(ciphertext, 'someKey');
                     var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
     
-                    
                     var fromDate = decryptedData.from
+                    var from_day = fromDate.split('T')
+                    from_day = from_day[0]
                     fromDate = moment(fromDate).format('L');
                     var fromyymmdd = fromDate.split('/')
                     var toDate = decryptedData.to
+                    var to_day = toDate.split('T')
+                    to_day = to_day[0]
                     toDate = moment(toDate).format('L');
                     var toyymmdd = toDate.split('/')
                     
@@ -456,7 +459,7 @@ const AlarmRoutes = (app) =>{
                     }
                 }
 
-                console.log(dateRange)
+
                 var alarmdata = []
                 //get all the data from the date range
                 for(var i=0;i<dateRange.length;i++){
@@ -475,7 +478,7 @@ const AlarmRoutes = (app) =>{
                 }
 
                 alarmdata = alarmdataCopy
-
+                alarmdataCopy = []
                 for(var i=0;i<alarmdata.length;i++){
                     var alarmObj = new Alarm
                     var alarmItem = alarmdata[i]
@@ -536,6 +539,16 @@ const AlarmRoutes = (app) =>{
                 }
                 //add in time difference
 //markReport
+                for(var i=0;i<alarmdata.length;i++){
+                    var ts = alarmdata[i].ts
+                    ts_day = ts.split(' ')
+                    ts_day = ts_day[0]
+                    if(from_day <= ts_day && to_day >= ts_day){
+                        alarmdataCopy.push(alarmdata[i])
+                    }
+                }
+                alarmdata = alarmdataCopy
+                alarmdataCopy = []
                 alarmdata = sortObjectsArray(alarmdata, 'ts')
                 res.json({'data' : alarmdata})
             }
