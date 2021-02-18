@@ -147,7 +147,7 @@ const Download = (app) => {
             }
         }
         renderAlarms = sortObjectsArray(renderAlarms, 'ts', {order: 'desc'})
-        renderAlarms = pdfcontroller.chunkArray(renderAlarms , 8)
+        renderAlarms = pdfcontroller.chunkArray(renderAlarms , 5)
         // console.log(renderAlarms)
 
         for(var blockIndex=0;blockIndex<renderAlarms.length;blockIndex++){
