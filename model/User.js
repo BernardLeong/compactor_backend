@@ -69,7 +69,7 @@ class User{
     }
 
     getCurrentUser(userid, type){
-        var docClient = this.docClient
+        var livedocClient = this.livedocClient
         var idField = ''
         if(type == 'user'){
             var table = this.userTable
@@ -85,8 +85,6 @@ class User{
             var table = this.adminTable
             idField = 'adminUserID'
         }
-        
-        var docClient = this.docClient
         var params = {
             TableName: table,
             Key:{
@@ -95,7 +93,7 @@ class User{
 
         params['Key'][idField] = userid
         return new Promise((resolve, reject)=>{
-            docClient.get(params, (err, data)=> {
+            livedocClient.get(params, (err, data)=> {
                 if (err) {
                     reject("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
                 } else {
