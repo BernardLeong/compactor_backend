@@ -539,16 +539,19 @@ const AlarmRoutes = (app) =>{
                 }
                 //add in time difference
 //markReport
-                for(var i=0;i<alarmdata.length;i++){
-                    var ts = alarmdata[i].ts
-                    ts_day = ts.split(' ')
-                    ts_day = ts_day[0]
-                    if(from_day <= ts_day && to_day >= ts_day){
-                        alarmdataCopy.push(alarmdata[i])
+                if(ciphertext !== 'all'){
+                    for(var i=0;i<alarmdata.length;i++){
+                        var ts = alarmdata[i].ts
+                        ts_day = ts.split(' ')
+                        ts_day = ts_day[0]
+                        if(from_day <= ts_day && to_day >= ts_day){
+                            alarmdataCopy.push(alarmdata[i])
+                        }
                     }
+                    alarmdata = alarmdataCopy
+                    alarmdataCopy = []
                 }
-                alarmdata = alarmdataCopy
-                alarmdataCopy = []
+                
                 alarmdata = sortObjectsArray(alarmdata, 'ts')
                 res.json({'data' : alarmdata})
             }
