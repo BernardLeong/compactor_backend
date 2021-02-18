@@ -3,6 +3,7 @@ const AWS = require('aws-sdk')
 const fs = require('fs')
 const util = require('util')
 const CryptoJS = require("crypto-js");
+const awsIot = require('aws-iot-device-sdk');
 const sortObjectsArray = require('sort-objects-array');
 const writeFile = util.promisify(fs.writeFile)
 const Alarm = require('./../model/Alarm')
@@ -503,6 +504,42 @@ const AlarmRoutes = (app) =>{
                 'error' : 'Please log in first'
             })
         }
+    })
+
+    app.post('/publishMQTT',async(req, res)=>{
+
+        var device = awsIot.device({
+            keyPath: './keys/053e36fae2-private.pem.key',
+            certPath: './keys/053e36fae2-certificate.pem.crt',
+            caPath: './keys/root-CA.crt',
+            clientId: 'iotconsole-161298119170-0',
+            host: 'ak2ka7wr2oexq-ats.iot.ap-southeast-1.amazonaws.com'
+        });
+
+        eventParams = { 
+            "ID" : "DS-815", 
+            "ts": "2021-02-08 17:43:44", 
+            "Command" : "Clear", "Type" : "EStop", 
+            "User" : "Test User" 
+        }
+
+        device
+        .on('connect', function() {
+            console.log('connect');
+            // device.subscribe('Compactor/Data')
+            // device.publish('Compactor/Data', JSON.stringify(eventParams))
+            // device.subscribe('Compactor/Lol');
+            device.subscribe('Compactor/Command')
+            device.publish('Compactor/Command', JSON.stringify(eventParams));
+            res.json({
+                success : true
+            })
+        });
+
+        device
+        .on('message', function(topic, payload) {
+            console.log('message', topic, payload.toString());
+        });
     })
 
     app.get('/getDetailAlarm',async(req, res)=>{
