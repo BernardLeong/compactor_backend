@@ -29,7 +29,7 @@ const Default = (app) => {
 
 const Download = (app) => {
     app.get('/generatePDF/:data',async(req, res)=>{
-        //markb
+        //mark
         var CryptoJS = require("crypto-js");
         var pdf = require('html-pdf');
         var now = moment().format('MMMM Do YYYY, h:mm:ss a');
@@ -39,8 +39,97 @@ const Download = (app) => {
         var encrypytkey = 'someKey'
         var bytes  = CryptoJS.AES.decrypt(encrypt, encrypytkey);
         var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-        decryptedData = decryptedData['data']
-        var renderAlarms = decryptedData
+        var starttime = decryptedData['from']
+        var endtime = decryptedData['to']
+        let dateObj = moment().format('L');
+        var yymm = dateObj.split('/')
+        yymm = `${yymm[2]}${yymm[0]}`
+        var dynamicAlarmTable = `Alarm_${yymm}`
+
+        var alarm = new Alarm(dynamicAlarmTable)
+        var allAlarmInfo = await alarm.getAllClearedAlarm()
+        for(var i=0;i<allAlarmInfo.length;i++){
+            var alarmObj = new Alarm
+            var alarmItem = allAlarmInfo[i]
+            var earlier = new Date(alarmItem.ts)
+            var later = new Date(alarmItem.ClearedTS)
+            var time_difference = alarmObj.time_difference(later, earlier)
+
+            var hours = Math.floor(time_difference/60)
+            var days = Math.floor(hours/24)
+            var minutes = time_difference
+            
+            if(hours < 1){
+                hours = 0
+            }
+            
+            if(days < 1){
+                days = 0
+            }
+            
+            if(days){
+                hours = hours - (days * 24)
+
+                if(hours == 1){
+                    time_difference = `${days} day ${hours} hour`
+                }else{
+                    time_difference = `${days} days ${hours} hours`
+                }
+            }else if(!days && hours){
+                minutes = minutes - (hours *60)
+                if(hours == 1){
+                    if(minutes == 1){
+                        time_difference = `${hours} hour ${minutes} minute`
+                    }else{
+                        time_difference = `${hours} hour ${minutes} minutes`
+                    }
+                }else{
+                    if(minutes == 1){
+                        time_difference = `${hours} hours ${minutes} minute`
+                    }else{
+                        time_difference = `${hours} hours ${minutes} minutes`
+                    }
+                }
+            }else{
+                if(minutes < 1){
+                    time_difference = `Less than a minute`
+                }else if(minutes == 1){
+                    time_difference = `${minutes} minute`
+                }else{
+                    time_difference = `${minutes} minutes`
+                }
+            }
+            allAlarmInfo[i]['EquipmentID'] = allAlarmInfo[i]['ID']
+            allAlarmInfo[i]['EquipmentType'] = allAlarmInfo[i]['Type']
+            allAlarmInfo[i]['timeDifference'] = time_difference
+
+            delete(allAlarmInfo[i]['ID'])
+            delete(allAlarmInfo[i]['EquipmentType'])
+        }
+
+        var renderAlarms = []
+
+        for(var i=0;i<allAlarmInfo.length;i++){
+            if(starttime !== endtime){
+                var todaydate = moment(allAlarmInfo[i]['ts']).format()
+                todaydate = new Date(todaydate).getTime()
+                var startTime = new Date(starttime).getTime()
+                var endTime = new Date(endtime).getTime()
+                if(startTime <= todaydate && endTime >= todaydate){
+                    renderAlarms.push(allAlarmInfo[i])
+                }
+            }
+            else{
+                var todaydate = moment(allAlarmInfo[i]['ts']).format()
+                todaydate = new Date(todaydate).getTime()
+                var startTime = new Date(starttime).getTime()
+                var endTime = new Date(endtime).getTime()
+                if(startTime <= todaydate){
+                    renderAlarms.push(allAlarmInfo[i])
+                }
+            }
+        }        
+        //
         for(var i=0;i<renderAlarms.length;i++){
             var renderAlarm = renderAlarms[i]
             var ts = renderAlarm.ts
@@ -59,6 +148,7 @@ const Download = (app) => {
         }
         renderAlarms = sortObjectsArray(renderAlarms, 'ts', {order: 'desc'})
         renderAlarms = pdfcontroller.chunkArray(renderAlarms , 8)
+        // console.log(renderAlarms)
 
         for(var blockIndex=0;blockIndex<renderAlarms.length;blockIndex++){
             var renderAlarmsBlock = renderAlarms[blockIndex]
@@ -407,6 +497,7 @@ const AlarmRoutes = (app) =>{
             }else{
                 //content in here
                 //decrypt time
+                var ciphertext = req.params.ciphertext
                 var alarm = new Alarm
                 var tablesAll = await alarm.readAllTables()
                 tablesAll = tablesAll.TableNames

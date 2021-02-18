@@ -127,7 +127,7 @@ class Alarm{
         })
     }
 
-    async getAllLiveAlarm(){
+    async getAllClearedAlarm(){
         var tableName = this.alarmTable
         var dynamoClient = this.livedocClient
         var params = {
@@ -140,6 +140,15 @@ class Alarm{
                 if (err) {
                     resolve(err)
                  } else {
+                    var dataSets = []
+                    data = data.Items
+                    for(var i=0;i<data.length;i++){
+                        var dta = data[i]
+                        if(dta.ClearedTS && dta.Status == 'Cleared'){
+                            dataSets.push(data[i])
+                        }
+                    }
+                    data = dataSets
                     resolve(data)
                  }
             })
