@@ -262,46 +262,6 @@ const Login = (app) => {
         }
     })
 
-    app.post('/editUser',async(req, res)=>{
-        //can only edit self
-        //get userid
-        var type = 'user'
-        if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
-            type = 'admin'
-        }
-
-        if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
-            type = 'serviceUser'
-        }
-
-        //ask for 
-        if(req.headers.authorization){
-            var token = req.headers.authorization.split(' ')
-            if(token[0] == 'Bearer'){
-                accesstoken = token[1]
-            }else{
-                res.json({
-                    'success' : false,
-                    'error' : 'Please use bearer token to log in'
-                })
-                accesstoken = null
-            }
-        }
-
-        if(accesstoken){
-            let user = new User
-            let userid = await user.getUserIDFromToken(accesstoken)
-            var editUserDetails = { 'username' : req.body.username, 'password' : req.body.password}
-            user.editUserDetails(userid, type, editUserDetails)
-        }else{
-            res.json(
-                {
-                    'error' : 'Please log in first'
-                }
-            )
-        }
-    })
-
     app.post('/registerUser',(req, res)=>{
         if(req.body.username && req.body.password){
             //save username and password
@@ -332,10 +292,11 @@ const Login = (app) => {
             let type = req.body.type
             let username = req.body.username
             let password = req.body.password
-
             auth.autheticate(username, password, type).then((result)=>{
+                console.log(result)
                 res.json(result)
             }).catch((err)=>{
+                console.log(err)
                 res.json(err)
             })
         }else{
@@ -369,6 +330,46 @@ const Login = (app) => {
             }))
         }
     })
+
+        // app.post('/editUser',async(req, res)=>{
+    //     //can only edit self
+    //     //get userid
+    //     var type = 'user'
+    //     if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
+    //         type = 'admin'
+    //     }
+
+    //     if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
+    //         type = 'serviceUser'
+    //     }
+
+    //     //ask for 
+    //     if(req.headers.authorization){
+    //         var token = req.headers.authorization.split(' ')
+    //         if(token[0] == 'Bearer'){
+    //             accesstoken = token[1]
+    //         }else{
+    //             res.json({
+    //                 'success' : false,
+    //                 'error' : 'Please use bearer token to log in'
+    //             })
+    //             accesstoken = null
+    //         }
+    //     }
+
+    //     if(accesstoken){
+    //         let user = new User
+    //         let userid = await user.getUserIDFromToken(accesstoken)
+    //         var editUserDetails = { 'username' : req.body.username, 'password' : req.body.password}
+    //         user.editUserDetails(userid, type, editUserDetails)
+    //     }else{
+    //         res.json(
+    //             {
+    //                 'error' : 'Please log in first'
+    //             }
+    //         )
+    //     }
+    // })
 }
 
 const AlarmRoutes = (app) =>{

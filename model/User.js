@@ -149,7 +149,8 @@ class User{
         }
 
         var tableName = this.lastIDtable
-        var docClient = this.docClient
+        //marka
+        var livedocClient = this.livedocClient
         var params = {
             TableName: tableName,
             Key:{
@@ -157,7 +158,7 @@ class User{
             }
         };
         return new Promise((resolve,reject)=>{
-            docClient.get(params, (err, data)=>{
+            livedocClient.get(params, (err, data)=>{
                 if (err) {
                     reject("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
                 } else {
@@ -170,7 +171,6 @@ class User{
     updateLastId(lastid, type){
         var nextid = lastid + 1
         var tableName = this.lastIDtable
-        var docClient = this.docClient
         if(type == 'user'){
             var table = this.userTable
         }
@@ -183,6 +183,8 @@ class User{
             var table = this.adminTable
         }
 
+        var livedocClient = this.livedocClient
+
         var params = {
             TableName:tableName,
             Key:{
@@ -194,7 +196,7 @@ class User{
             },
             ReturnValues:"UPDATED_NEW"
         };
-        docClient.update(params, (err, data)=>{
+        livedocClient.update(params, (err, data)=>{
             if (err) {
                 console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
             } else {
@@ -207,7 +209,7 @@ class User{
         //if error return false
         //if result return true
 
-        var dynamoClient = this.docClient
+        var dynamoClient = this.livedocClient
         var params = {
             TableName: tableName, // give it your table name 
             ProjectionExpression: "#uname, #password, #uid",
@@ -271,13 +273,14 @@ class User{
             }
             item[userid] = getlast.Item.lastid
             //create a record in user table
-            var docClient = this.docClient
+            var livedocClient = this.livedocClient
             var params = {
                 TableName:tableName,
                 Item: item   
             };
+            //marka
             let newPromise = new Promise((resolve,reject)=>{
-                docClient.put(params, (err, data)=>{
+                livedocClient.put(params, (err, data)=>{
                     if (err) {
                         reject(err);
                     } else {
@@ -323,5 +326,11 @@ class User{
         return decryptedPW
     }
 }
+
+let user = new User
+var bytes = user.decryptPassword('U2FsdGVkX18EdDnWSN+jkUUI8N0xspcAolsVopZvci1jWeEFD/PFD1Fre/gcTmds')
+var decryptedPW = JSON.parse(bytes.toString(CryptoJS.enc.Utf8))
+// var userDetails = {username: data.Item.username, password: decryptedPW}
+console.log(decryptedPW)
 
 module.exports = User

@@ -11,14 +11,15 @@ class Authetication{
         this.userTable = 'user',
         this.lastID = 'lastID',
         this.accesscontroltable = 'accesscontroltable'
-        this.dynamoClient = new AWS.DynamoDB.DocumentClient(
+        this.livedocClient = new AWS.DynamoDB.DocumentClient(
             {
-                region: 'us-east-2',
-                accessKeyId: 'AKIA47VGGTAQQJKET2X7',
-                secretAccessKey: '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'
+                region: 'ap-southeast-1',
+                accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
+                secretAccessKey: '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'
             }
         );
     }
+    
     signToken(username, password){
             var token = jwt.sign({ 
                 'username': username,
@@ -28,43 +29,8 @@ class Authetication{
         return token
     }
 
-    getIDFromToken(token, type){
-        var tableName = this.accesscontroltable
-        var dynamoClient = this.dynamoClient
-        var idField = 'userid'
-        if(type == 'admin'){
-            idField = 'adminUserID'
-        }
-        if(type == 'serviceUser'){
-            idField = 'serviceUserID'
-        }
-
-        var params = {
-            TableName: tableName, // give it your table name 
-            ProjectionExpression: "#token, #uid",
-            FilterExpression: "#token = :token",
-            ExpressionAttributeNames: {
-                "#token": "token",
-                '#uid': idField
-            },
-            ExpressionAttributeValues: {
-                ":token": token
-            }
-        };
-    
-        return new Promise((resolve, reject)=>{
-            dynamoClient.scan(params, (err, data)=> {
-                if (err) {
-                    reject(err)
-                } else {
-                    resolve(data.Items)
-                }
-            })
-        });
-    }
-
     getUserNameFromToken(token){
-        var docClient = this.dynamoClient
+        var livedocClient = this.livedocClient
         var params = {
             TableName: this.accesscontroltable,
             Key:{
@@ -72,7 +38,7 @@ class Authetication{
             }
         };
         return new Promise((resolve,reject)=>{
-            docClient.get(params, async(err, data)=>{
+            livedocClient.get(params, async(err, data)=>{
                 if (err) {
                     reject("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
                 } else {
@@ -99,7 +65,7 @@ class Authetication{
 
     checkToken(token, type){
         var tableName = this.accesscontroltable
-        var dynamoClient = this.dynamoClient
+        var livedocClient = this.livedocClient        
         var idField = 'userid'
         if(type == 'admin'){
             idField = 'adminUserID'
@@ -122,7 +88,7 @@ class Authetication{
         };
     
         return new Promise((resolve, reject)=>{
-            dynamoClient.scan(params, (err, data)=> {
+            livedocClient.scan(params, (err, data)=> {
                 if (err) {
                     reject(err)
                 } else {
@@ -132,56 +98,11 @@ class Authetication{
         });
     }
 
-    getAccessControlTokenLastID(){
-        var docClient = this.dynamoClient
-        var params = {
-            TableName: this.lastID,
-            Key:{
-                "table" : this.accesscontroltable
-            }
-        };
-        return new Promise((resolve,reject)=>{
-            docClient.get(params, (err, data)=>{
-                if (err) {
-                    reject("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
-                } else {
-                    resolve(data)
-                }
-            });
-        }) 
-    }
-
-    updateAccessLastID(lastid){
-        var nextid = lastid + 1
-        var tableName = this.lastID
-        var docClient = this.dynamoClient
-        var params = {
-            TableName:tableName,
-            Key:{
-                "table": this.accesscontroltable
-            },
-            UpdateExpression: "set lastid = :lastid",
-            ExpressionAttributeValues:{
-                ":lastid":nextid,
-            },
-            ReturnValues:"UPDATED_NEW"
-        };
-        docClient.update(params, (err, data)=>{
-            if (err) {
-                console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
-            } else {
-                console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
-            }
-        });
-    }
-
-    insertAccessControlToken(accesslastid, userid, token, idField){
+    insertAccessControlToken(userid, token, idField){
         var tableName = this.accesscontroltable
-        var docClient = this.dynamoClient
-
+        var livedocClient = this.livedocClient
 
         let item = {
-            "id": accesslastid,
             "valid" : true,
             "token" : token
         }
@@ -194,7 +115,7 @@ class Authetication{
         };
 
         return new Promise((resolve,reject)=>{
-            docClient.put(params, (err, data)=>{
+            livedocClient.put(params, (err, data)=>{
                 if (err) {
                     reject(err);
                 } else {
@@ -206,8 +127,7 @@ class Authetication{
 
     invalidateToken(token){
         var tableName = this.accesscontroltable
-        var docClient = this.dynamoClient
-
+        var livedocClient = this.livedocClient
         var params = {
             TableName:tableName,
             Key:{
@@ -219,7 +139,7 @@ class Authetication{
             },
             ReturnValues:"UPDATED_NEW"
         };
-        docClient.update(params, (err, data)=>{
+        livedocClient.update(params, (err, data)=>{
             if (err) {
                 console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
             } else {
@@ -240,14 +160,9 @@ class Authetication{
                     var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
                     if(username === result.Items[0].username && password === decryptedData){
                         var token = this.signToken(username, password)
-            //             //get last id
-                        let accesscontroltoken = await this.getAccessControlTokenLastID()
-                        let accesslastid = accesscontroltoken.Item.lastid
                         let userDetails = result.Items[0]
             //             //save token in accesscontrol table
-                        this.insertAccessControlToken(accesslastid, userDetails[userid], token, userid)
-            //             //increase lastid
-                        this.updateAccessLastID(accesslastid)
+                        this.insertAccessControlToken(userDetails[userid], token, userid)
                             resolve(
                                 {
                                     "success" : true,
@@ -271,7 +186,7 @@ class Authetication{
                     )
                 }
             }).catch((err)=>{
-                
+                console.log(err)
             })
         })
     }
