@@ -507,39 +507,92 @@ const AlarmRoutes = (app) =>{
     })
 
     app.post('/publishMQTT',async(req, res)=>{
-
-        var device = awsIot.device({
-            keyPath: './keys/053e36fae2-private.pem.key',
-            certPath: './keys/053e36fae2-certificate.pem.crt',
-            caPath: './keys/root-CA.crt',
-            clientId: 'iotconsole-161298119170-0',
-            host: 'ak2ka7wr2oexq-ats.iot.ap-southeast-1.amazonaws.com'
-        });
-
-        eventParams = { 
-            "ID" : "DS-815", 
-            "ts": "2021-02-08 17:43:44", 
-            "Command" : "Clear", "Type" : "EStop", 
-            "User" : "Test User" 
+        var type = 'user'
+        if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
+            type = 'admin'
         }
 
-        device
-        .on('connect', function() {
-            console.log('connect');
-            // device.subscribe('Compactor/Data')
-            // device.publish('Compactor/Data', JSON.stringify(eventParams))
-            // device.subscribe('Compactor/Lol');
-            device.subscribe('Compactor/Command')
-            device.publish('Compactor/Command', JSON.stringify(eventParams));
-            res.json({
-                success : true
-            })
-        });
+        if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
+            type = 'serviceUser'
+        }
+        
+        var accesstoken = null
+        if(req.headers.authorization){
+            var token = req.headers.authorization.split(' ')
+            if(token[0] == 'Bearer'){
+                accesstoken = token[1]
+            }else{
+                res.json({
+                    'success' : false,
+                    'error' : 'Please use bearer token to log in'
+                })
+            }
+        }
+        if(accesstoken){
 
-        device
-        .on('message', function(topic, payload) {
-            console.log('message', topic, payload.toString());
-        });
+            if(type !== 'admin'){
+                res.json({
+                    'error' : `task not allowed to be executed by ${type}`
+                })
+                return;
+            }
+
+            let auth = new Authetication
+            let checktoken = await auth.checkToken(accesstoken, type)
+            if(checktoken <= 0){
+                res.json({
+                    'success' : false,
+                    'error' : 'Invalid token'
+                })
+            }else{
+                var device = awsIot.device({
+                    keyPath: './keys/053e36fae2-private.pem.key',
+                    certPath: './keys/053e36fae2-certificate.pem.crt',
+                    caPath: './keys/root-CA.crt',
+                    clientId: 'iotconsole-161298119170-0',
+                    host: 'ak2ka7wr2oexq-ats.iot.ap-southeast-1.amazonaws.com'
+                });
+        
+                // example eventParams = { 
+                //     "ID" : "DS-815", 
+                //     "ts": "2021-02-08 17:43:44", 
+                //     "Command" : "Clear", 
+                //     "Type" : "EStop", 
+                //     "User" : "Test User" 
+                // }
+        
+                eventParams = { 
+                    "ID" : req.body.ID, 
+                    "ts": req.body.ts, 
+                    "Command" : "Clear", 
+                    "Type" : req.body.type, 
+                    "User" : req.body.username
+                }
+        
+                device
+                .on('connect', function() {
+                    console.log('connect');
+                    // device.subscribe('Compactor/Data')
+                    // device.publish('Compactor/Data', JSON.stringify(eventParams))
+                    // device.subscribe('Compactor/Lol');
+                    device.subscribe('Compactor/Command')
+                    device.publish('Compactor/Command', JSON.stringify(eventParams));
+                    res.json({
+                        success : true
+                    })
+                });
+        
+                device
+                .on('message', function(topic, payload) {
+                    console.log('message', topic, payload.toString());
+                });
+            }
+        }else{
+            res.json({
+                'success' : false,
+                'error' : 'Please log in first'
+            })
+        }
     })
 
     app.get('/getDetailAlarm',async(req, res)=>{
