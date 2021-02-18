@@ -325,10 +325,4 @@ class User{
     }
 }
 
-let user = new User
-var bytes = user.decryptPassword('U2FsdGVkX18EdDnWSN+jkUUI8N0xspcAolsVopZvci1jWeEFD/PFD1Fre/gcTmds')
-var decryptedPW = JSON.parse(bytes.toString(CryptoJS.enc.Utf8))
-// var userDetails = {username: data.Item.username, password: decryptedPW}
-console.log(decryptedPW)
-
 module.exports = User

@@ -61,17 +61,25 @@ const Download = (app) => {
             }
         }
         //
+        for(var i=0;i<renderAlarms.length;i++){
+            var renderAlarm = renderAlarms[i]
+            var ts = renderAlarm.ts
+            ts = ts.split(' ')
+            renderAlarms[i]['timestampday'] = ts[0]
+            renderAlarms[i]['timestamptime'] = ts[1]
+        }
         renderAlarms = sortObjectsArray(renderAlarms, 'ts', {order: 'desc'})
-        renderAlarms = pdfcontroller.chunkArray(renderAlarms , 12)
+        renderAlarms = pdfcontroller.chunkArray(renderAlarms , 8)
         // console.log(renderAlarms)
 
         for(var blockIndex=0;blockIndex<renderAlarms.length;blockIndex++){
             var renderAlarmsBlock = renderAlarms[blockIndex]
+
             for(var index=0;index<renderAlarmsBlock.length;index++){
                     var alarm = renderAlarmsBlock[index]
                     var tableContent = `
                         <tr>
-                            <td>${alarm.ts}</td>
+                            <td><div>${alarm.timestampday}</div><div>${alarm.timestamptime}</div></td>
                             <td>${alarm.ID}</td>
                             <td>${alarm.Type}</td>
                             <td>${alarm.Status}</td>
