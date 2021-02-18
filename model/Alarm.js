@@ -155,6 +155,26 @@ class Alarm{
         });
     }
 
+    async getAllLiveAlarm(){
+        var tableName = this.alarmTable
+        var dynamoClient = this.livedocClient
+        var params = {
+          TableName: tableName, // give it your table name 
+          Select: "ALL_ATTRIBUTES"
+        };
+      
+        return new Promise((resolve, reject)=>{
+            dynamoClient.scan(params, (err, data)=> {
+                if (err) {
+                    resolve(err)
+                 } else {
+                    resolve(data)
+                 }
+            })
+        });
+    }
+    
+
     getAllAlarm(){
         console.log(tableName)
         var tableName = this.alarmTable || this.alarmInfoTable 

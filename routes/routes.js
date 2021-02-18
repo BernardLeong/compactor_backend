@@ -176,10 +176,10 @@ const Download = (app) => {
             renderAlarmsBlock = `
             <table>
                 <tr>
-                <td style="text-align: center">Equipment ID</td>
-                    <td style="text-align: center">Alarm Trigger Timestamp</td>
-                    <td style="text-align: center">Alarm Clear Timestamp</td>
-                    <td style="text-align: center">Time Difference</td>
+                <td style="text-align: center">ID</td>
+                    <td style="text-align: center">Alarm ts</td>
+                    <td style="text-align: center">Alarm Clear ts</td>
+                    <td style="text-align: center">SLA</td>
                     <td style="text-align: center">Alarm Type</td>
                     <td style="text-align: center">Fault Type</td>
                 </tr>
