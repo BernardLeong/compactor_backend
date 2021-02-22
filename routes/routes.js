@@ -954,7 +954,7 @@ const AlarmRoutes = (app) =>{
             if(equipments.length <= 0){
                 res.json({'success' : false, 'error' : 'No Data'})
             }else{
-                let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates, address}) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates , address}));
+                let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates, shortAddress, address}) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates , shortAddress, address}));
                 var alarmTypes = ['EStop','FireAlarm','GateNotClose','WeightExceedLimit','TransferScrewMotorTrip','WeightExceedLimit','DischargeScrewMotorTrip','BinLifterMotorTrip', 'MotorTrip']
 
                 resultArr = []
@@ -967,6 +967,7 @@ const AlarmRoutes = (app) =>{
                             var id = result[x]['EquipmentID']
                             object["ts"] = result[x][alarmType]['ts']
                             object["CurrentStatus"] = result[x][alarmType]['CurrentStatus']
+                            object["shortAddress"] = result[x]['shortAddress']
                             // if(id.includes('DS')){
                             //     object["EquipmentType"] = 'DS'
                             // }else{
