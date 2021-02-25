@@ -956,13 +956,7 @@ const AlarmRoutes = (app) =>{
             }else{
                 let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates, shortAddress, address}) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates , shortAddress, address}));
                 var alarmTypes = ['EStop','FireAlarm','GateNotClose','WeightExceedLimit','TransferScrewMotorTrip','WeightExceedLimit','DischargeScrewMotorTrip','BinLifterMotorTrip', 'MotorTrip']
-                
-                var addressesLong = []
-                for(var i=0;i<result.length;i++){
-                    addressesLong.push([result[i].address,result[i].EquipmentID])
-                }
-
-                console.log(addressesLong)
+                console.log(result)
                 resultArr = []
                 for(var i=0;i<alarmTypes.length;i++){
                     var alarmType = alarmTypes[i]
@@ -987,6 +981,7 @@ const AlarmRoutes = (app) =>{
                     }
                 }
 
+                resultArr = compactor.removeDuplicates(resultArr, 'ts')
                 resultArr = sortObjectsArray(resultArr, 'ts', {order: 'desc'});
                 res.json({
                     'success' : true,

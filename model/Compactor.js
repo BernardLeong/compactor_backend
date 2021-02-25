@@ -89,6 +89,10 @@ class Compactor{
             })
         });
     }
+        
+    removeDuplicates(arr, key) {
+        return [...new Map(arr.map(item => [item[key], item])).values()]
+    }
 
     async scanEquipmentCurrentStatus(){
         var tableName = this.equipmentInformation

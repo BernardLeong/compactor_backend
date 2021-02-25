@@ -173,7 +173,6 @@ class Alarm{
             })
         });
     }
-    
 
     getAllAlarm(){
         console.log(tableName)
