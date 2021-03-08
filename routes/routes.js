@@ -421,45 +421,6 @@ const Login = (app) => {
         }
     })
 
-        // app.post('/editUser',async(req, res)=>{
-    //     //can only edit self
-    //     //get userid
-    //     var type = 'user'
-    //     if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
-    //         type = 'admin'
-    //     }
-
-    //     if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
-    //         type = 'serviceUser'
-    //     }
-
-    //     //ask for 
-    //     if(req.headers.authorization){
-    //         var token = req.headers.authorization.split(' ')
-    //         if(token[0] == 'Bearer'){
-    //             accesstoken = token[1]
-    //         }else{
-    //             res.json({
-    //                 'success' : false,
-    //                 'error' : 'Please use bearer token to log in'
-    //             })
-    //             accesstoken = null
-    //         }
-    //     }
-
-    //     if(accesstoken){
-    //         let user = new User
-    //         let userid = await user.getUserIDFromToken(accesstoken)
-    //         var editUserDetails = { 'username' : req.body.username, 'password' : req.body.password}
-    //         user.editUserDetails(userid, type, editUserDetails)
-    //     }else{
-    //         res.json(
-    //             {
-    //                 'error' : 'Please log in first'
-    //             }
-    //         )
-    //     }
-    // })
 }
 
 const AlarmRoutes = (app) =>{
@@ -955,7 +916,7 @@ const AlarmRoutes = (app) =>{
                 res.json({'success' : false, 'error' : 'No Data'})
             }else{
                 let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates, shortAddress, address}) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section, coordinates , shortAddress, address}));
-                var alarmTypes = ['EStop','FireAlarm','GateNotClose','WeightExceedLimit','TransferScrewMotorTrip','WeightExceedLimit','DischargeScrewMotorTrip','BinLifterMotorTrip', 'MotorTrip']
+                var alarmTypes = ['EStop','FireAlarm','GateNotClose','WeightExceedLimit','TransferScrewMotorTrip','WeightExceedLimit','DischargeScrewMotorTrip','DischargeGateMotorTrip','BinLifterMotorTrip', 'MotorTrip']
                 console.log(result)
                 resultArr = []
                 for(var i=0;i<alarmTypes.length;i++){
@@ -992,6 +953,13 @@ const AlarmRoutes = (app) =>{
 }
 
 const CompactorRoutes = (app) =>{
+    app.post('/weightCollectionData',async(req, res)=>{
+        var compactor = new Compactor
+        var saveWeightCollected = compactor.saveWeightCollected()
+        saveWeightCollected.then((result)=>{
+            res.json(result)
+        })
+    })
     //can be done by admin
     app.post('/compactorDetailReport',async(req, res)=>{
         //scan all compactor
