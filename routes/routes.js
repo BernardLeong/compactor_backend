@@ -896,10 +896,8 @@ const AlarmRoutes = (app) =>{
             weightCollection = sortObjectsArray(weightCollection, 'EquipmentID');
 
             res.json({
-                result : weightCollection
+                weightCollection : weightCollection
             })
-
-            // console.log(weightCollection)
         })
     })
 
