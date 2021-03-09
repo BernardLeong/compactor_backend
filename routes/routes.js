@@ -864,6 +864,45 @@ const AlarmRoutes = (app) =>{
         var clear = await alarm.clearMailAlarm(req.body.ts, req.body.ID)
     })
 
+    app.get('/getEquipmentWeightCollection/live',async(req, res)=>{
+        let compactor = new Compactor
+        let data = compactor.getEquipmentWeightCollection()
+        data.then(async(weightCollection)=>{
+            //markkrrr
+            //get the address here
+            let equipments = await compactor.scanEquipmentCurrentStatus()
+            for(var index=0;index<equipments.length;index++){
+                var equipment = equipments[index]
+                for(var i=0;i<weightCollection.length;i++){
+                    var weightEvent = weightCollection[i]
+                    if(weightEvent.EquipmentID == equipment.EquipmentID){
+                        weightCollection[i]["shortAddress"] = equipment.shortAddress
+                    }
+
+                    weightCollection[i]["currentWeight"] = Math.round(weightEvent.currentWeight)
+                    weightCollection[i]["collectedWeight"] = Math.round(parseFloat(weightEvent["Weight-Collected"]) )
+                    weightCollection[i]["collectTS"] = weightEvent["collectedWeight-ts"]
+
+                    delete(weightCollection[i]["insertID"])
+                    delete(weightCollection[i]["latestTS"])
+                    delete(weightCollection[i]["recordTS"])
+                }
+            }
+            for(var i=0;i<weightCollection.length;i++){
+                delete(weightCollection[i]["collectedWeight-ts"])
+                delete(weightCollection[i]["Weight-Collected"])
+            }
+
+            weightCollection = sortObjectsArray(weightCollection, 'EquipmentID');
+
+            res.json({
+                result : weightCollection
+            })
+
+            // console.log(weightCollection)
+        })
+    })
+
     app.get('/getTodaysAlarms/live',async(req, res)=>{
         var todayDate = moment().format('L')
         var yymm = todayDate.split('/')

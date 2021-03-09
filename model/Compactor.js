@@ -35,6 +35,27 @@ class Compactor{
         this.equipmentInformation = 'EquipmentInformation'
     }
 
+    async getEquipmentWeightCollection(){
+        //markrrrr
+        var dynamoClient = this.livedocClient
+        var tableName = "EquipmentWeightCollection"
+        var params = {
+            TableName: tableName, // give it your table name 
+            Select: "ALL_ATTRIBUTES"
+          };
+
+          return new Promise((resolve, reject)=>{
+            dynamoClient.scan(params, (err, data)=> {
+                if (err) {
+                    reject(err)
+                 } else {
+                    var dataItems = data.Items
+                    resolve(dataItems)
+                 }
+            })
+        });
+    }
+
     async getEquipmentEvents(ID){
         let dateObj = moment().format('L');
         var yymmdd = dateObj.split('/')
