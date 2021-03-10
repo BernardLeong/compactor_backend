@@ -1202,35 +1202,62 @@ const CompactorRoutes = (app) =>{
         if(req.headers.apikey == 'esriAlarmAPI'){
             let compactor = new Compactor
             let equipments = await compactor.scanEquipmentCurrentStatus()
+            // console.log(equipments)
+        // }
+
             //highly unlikely but still place condition
             if(equipments.length <= 0){
                 res.json({'success' : false, 'error' : 'No Data'})
             }else{
-                let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, Section }));
+                let results = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, MotorTrip, Section }) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeScrewMotorTrip, BinLifterMotorTrip, MotorTrip, Section }));
                 var alarmTypes = ['EStop','FireAlarm','GateNotClose','WeightExceedLimit','TransferScrewMotorTrip','WeightExceedLimit','DischargeScrewMotorTrip','BinLifterMotorTrip', 'MotorTrip']
 
                 resultArr = []
                 for(var i=0;i<alarmTypes.length;i++){
-                    var alarmType = alarmTypes[i]
-                    for(var x=0;x<result.length;x++){
-                        var object = {}
+                    for(var x=0;x<results.length;x++){
+                        var alarmType = alarmTypes[i]
+                        var result = results[x]
 
-                        if( !(!result[x][alarmType] || result[x][alarmType] == {} ) ){
-                            var id = result[x]['EquipmentID']
-                            object["ts"] = result[x][alarmType]['ts']
-                            object["Status"] = result[x][alarmType]['CurrentStatus']
+                        if (Object.keys(result[alarmType]).length !== 0){
+                            var object = {}
+                            var id = result.EquipmentID
+                            // console.log([alarmType,result[alarmType],result["EquipmentID"]])
+                            object["ts"] = result[alarmType]['ts']
+                            object["Status"] = result[alarmType]['CurrentStatus']
                             if(id.includes('DS')){
                                 object["EquipmentType"] = 'DS'
                             }else{
                                 object["EquipmentType"] = 'MM'
                             }
-                            object["ID"] = result[x]['EquipmentID']
+                            object["ID"] = id
                             object["Type"] = alarmType
-                            object["sectionArea"] = result[x]['Section']
+                            object["sectionArea"] = result['Section']
                             resultArr.push(object)
                         }
+                        // for(alarmType in result){
+                            // console.log()
+                            // var alarmData = result[alarmType]
+                            // if (Object.keys(alarmData).length !== 0){
+                            //     var object = {}
+                            //     var id = result.EquipmentID
+                            //     console.log([alarmType,result[alarmType],result["EquipmentID"]])
+                                // object["ts"] = result[alarmType]['ts']
+                                // object["Status"] = result[alarmType]['CurrentStatus']
+                                // if(id.includes('DS')){
+                                //     object["EquipmentType"] = 'DS'
+                                // }else{
+                                //     object["EquipmentType"] = 'MM'
+                                // }
+                                // object["ID"] = id
+                                // object["Type"] = alarmType
+                                // object["sectionArea"] = result['Section']
+                                // resultArr.push(object)
+                            // }
+                        // }
                     }
                 }
+
+                // console.log(resultArr)
 
                 resultArr = sortObjectsArray(resultArr, 'ID');
                 res.json({
