@@ -954,13 +954,11 @@ const AlarmRoutes = (app) =>{
             }else{
                 let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeGateMotorTrip, DischargeScrewMotorTrip, BinLifterMotorTrip, MotorTrip, Section, coordinates, shortAddress, address}) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeGateMotorTrip, DischargeScrewMotorTrip, BinLifterMotorTrip, MotorTrip, Section, coordinates , shortAddress, address}));
                 var alarmTypes = ['EStop','FireAlarm','GateNotClose','WeightExceedLimit','TransferScrewMotorTrip','WeightExceedLimit','DischargeScrewMotorTrip','DischargeGateMotorTrip','BinLifterMotorTrip', 'MotorTrip']
-                console.log(result)
                 resultArr = []
                 for(var i=0;i<alarmTypes.length;i++){
                     var alarmType = alarmTypes[i]
                     for(var x=0;x<result.length;x++){
                         var object = {}
-
                         if( !(!result[x][alarmType] || result[x][alarmType] == {} ) ){
                             var id = result[x]['EquipmentID']
                             object["ts"] = result[x][alarmType]['ts']

@@ -56,49 +56,42 @@ class Compactor{
         });
     }
 
-    async getEquipmentEvents(ID){
-        let dateObj = moment().format('L');
-        var yymmdd = dateObj.split('/')
-        yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
-        var tableName = `Compactor_${yymmdd}`
-
-        var tableName = "Compactor_20210303_testing"
-        var params = {
-            TableName: tableName, // give it your table name 
-            Select: "ALL_ATTRIBUTES"
-        };
-    
-        var liveDynamo = this.liveDyDb
-        return new Promise((resolve, reject)=>{
-            liveDynamo.scan(params, (err, data)=>{
-                if (err) {
-                    resolve("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
-                } else {
-                    var dataItems = data.Items
-                    var equipmentID = ID
-                    var resolveData = []
-                    //get the weight event based on equipmentID
-                    for(var index=0;index<dataItems.length;index++){
-                        var dataItem = dataItems[index]
-                        var eqID = dataItem.ID
-                        eqID = eqID['S']
-    
-                        if(eqID == equipmentID){
-                            var obj = {}
-                            obj["ts"] = dataItem['ts']['S']
-                            obj["EquipmentType"] = dataItem['EquipmentType']['S']
-                            obj["ID"] = dataItem['ID']['S']
-                            obj["Weight"] = dataItem['ts']['S']
-                            obj["Weight"] = dataItem['Weight']['N']
-                            obj["FilledLevel-Weight"] = dataItem['FilledLevel-Weight']['N']
-                            obj["weightTabulated"] = dataItem['weightTabulated']['BOOL']
-                            resolveData.push(obj)
+    async getEquipmentEvents(ID, tableName){
+            var params = {
+                TableName: tableName, // give it your table name 
+                Select: "ALL_ATTRIBUTES"
+            };
+        
+            var liveDynamo = this.liveDyDb
+            return new Promise((resolve, reject)=>{
+                liveDynamo.scan(params, (err, data)=>{
+                    if (err) {
+                        resolve("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+                    } else {
+                        var dataItems = data.Items
+                        var equipmentID = ID
+                        var resolveData = []
+                        //get the weight event based on equipmentID
+                        for(var index=0;index<dataItems.length;index++){
+                            var dataItem = dataItems[index]
+                            var eqID = dataItem.ID
+                            eqID = eqID['S']
+        
+                            if(eqID == equipmentID){
+                                var obj = {}
+                                obj["ts"] = dataItem['ts']['S']
+                                obj["EquipmentType"] = dataItem['EquipmentType']['S']
+                                obj["ID"] = dataItem['ID']['S']
+                                obj["Weight"] = dataItem['ts']['S']
+                                obj["Weight"] = dataItem['Weight']['N']
+                                obj["FilledLevel-Weight"] = dataItem['FilledLevel-Weight']['N']
+                                resolveData.push(obj)
+                            }
+                            resolve(resolveData)
                         }
-                        resolve(resolveData)
                     }
-                }
+                })
             })
-        })
     }
 
     async getPreviousBlockData(liveDynamo, equipmentID){
@@ -137,6 +130,7 @@ class Compactor{
     }
 
     async buildParamsObj(equipmentID){
+       
         var weightEvents = await this.getEquipmentEvents(equipmentID)
         if(weightEvents.length <= 0){
             return
@@ -233,20 +227,29 @@ class Compactor{
             minimum["Weight"] = parseFloat(minimum["Weight"])
         }
         var params = {}
-        params['EquipmentID'] = { "S" : minimum['ID']}
-        params['collectedWeight-ts'] = { "S" : minimum['ts'] }
-        params['recordTS'] = { "S" : moment().format() };
-        params['insertID'] = { "S" : `ID-${parseInt(Math.random()*100)}-${minimum['ID']}` };
-        params['currentWeight'] = { "S" : currentWeight.toString() };
-        params['Weight-Collected'] = { "S" : weightDifference.toString() }
+
+        if(weightDifference > 50 && minimum.ts > maximum.ts){
+            params['EquipmentID'] = { "S" : minimum['ID']}
+            params['collectedWeight-ts'] = { "S" : minimum['ts'] }
+            params['recordTS'] = { "S" : moment().format() };
+            params['insertID'] = { "S" : `ID-${parseInt(Math.random()*100)}-${minimum['ID']}` };
+            params['currentWeight'] = { "S" : currentWeight.toString() };
+            params['Weight-Collected'] = { "S" : weightDifference.toString() }
+            params['latestTS'] = { "S" : latestRecord.ts}
+        }
         
+        if(Object.keys(params).length !== 0 ){
             var putReq = {
                 PutRequest: {
                     Item: params
                 }
             }
+            return putReq
+        }else{
+            return false
+        }
+        
         //latestTS will be the latest event TS looked thru based on EquipmentID
-        params['latestTS'] = { "S" : latestRecord.ts}
     
         // if(weightDifference > 50){
         //     if(minimum.ts > maximum.ts){
@@ -256,7 +259,7 @@ class Compactor{
         //     }
         // }
 
-        return putReq
+        // return putReq
     }
 
     async saveWeightCollected(){
@@ -269,54 +272,75 @@ class Compactor{
     
         //after looking thru the equipment IDS
         let params = []
-        for(var index=0;index<equipmentIDs.length;index++){
-            var equipmentID = equipmentIDs[index]
-            var weightEvents = await this.getEquipmentEvents(equipmentID)
-    
-            //update record of weight events 
-            if(weightEvents.length <= 0){
-                continue;
-            }
-    
-            let parmasHeader = await this.buildParamsObj(equipmentID)
-            var weightCollected = parmasHeader['PutRequest']['Item']['Weight-Collected']['S']
-            weightCollected = parseInt(weightCollected)
 
-            if(weightCollected > 50){
-                params.push(parmasHeader)
+        let dateObj = moment().format('L');
+        var yymmdd = dateObj.split('/')
+        yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
+        var tableName = `Compactor_${yymmdd}`
+        tableName = `Do NOt exists`
+        var response = await dynamodb.listTables(params).promise();
+        response = response.TableNames
+        var tableName = []
+        for(var i=0;i<response.length;i++){
+            var resp = response[i]
+            if(resp == tableName){
+                tableName.push(response[i])
             }
         }
 
-        // console.log(params)
-
-    
-            var insertParams = {
-                RequestItems: {
-                    "EquipmentWeightCollection": params
+        if(tableName.length > 0){
+            for(var index=0;index<equipmentIDs.length;index++){
+                var equipmentID = equipmentIDs[index]
+                var weightEvents = await this.getEquipmentEvents(equipmentID)
+        
+                if(weightEvents.length <= 0){
+                    continue;
                 }
+                //update record of weight events 
+                
+                // var test = await this.buildParamsObj('DS-816')
+                let parmasHeader = await this.buildParamsObj(equipmentID)
+                params.push(parmasHeader)
             }
     
-            var dynamoDB = new AWS.DynamoDB(
-                {
-                    region: 'ap-southeast-1',
-                    accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
-                    secretAccessKey: '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'
-                }
-            );
-            return new Promise((resolve, reject)=>{
-                dynamoDB.batchWriteItem(insertParams, function(err, data) {
-                    if (err) {
-                        resolve({
-                            success: false,
-                            message: err.message
-                        });
-                    } else {
-                        resolve({
-                            success: true
-                        });
+            params = params.filter(Boolean);
+                var insertParams = {
+                    RequestItems: {
+                        "EquipmentWeightCollection": params
                     }
-                });
+                }
+        
+                var dynamoDB = new AWS.DynamoDB(
+                    {
+                        region: 'ap-southeast-1',
+                        accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
+                        secretAccessKey: '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'
+                    }
+                );
+                return new Promise((resolve, reject)=>{
+                    dynamoDB.batchWriteItem(insertParams, function(err, data) {
+                        if (err) {
+                            resolve({
+                                success: false,
+                                message: err.message
+                            });
+                        } else {
+                            resolve({
+                                success: true
+                            });
+                        }
+                    });
+                })
+        }else{
+            return new Promise((resolve, reject)=>{
+               resolve({
+                    success: false,
+                    message: "Table not generated yet"
+                })
             })
+        }
+
+        
     }
 
     async scanAllLiveCoordinates(){
