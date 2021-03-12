@@ -137,8 +137,6 @@ class Compactor{
         }
 
         var liveDynamo = this.liveDyDb
-    
-        console.log(weightEvents)
         weightEvents = sortObjectsArray(weightEvents, 'ts')
     
         var lastIndex = weightEvents.length -1
@@ -316,20 +314,27 @@ class Compactor{
                         secretAccessKey: 'Z4HU+YNhgDRRA33dQJTo9TslCT/x4vglhKw2kQMQ'
                     }
                 );
-                return new Promise((resolve, reject)=>{
-                    dynamoDB.batchWriteItem(insertParams, function(err, data) {
-                        if (err) {
-                            resolve({
-                                success: false,
-                                message: err.message
-                            });
-                        } else {
-                            resolve({
-                                success: true
-                            });
-                        }
-                    });
-                })
+
+                if(params.length <= 0){
+                    return new Promise((resolve, reject)=>{
+                        resolve({success: false, message: 'Nothing to insert, no new events'})
+                    })
+                }else{
+                    return new Promise((resolve, reject)=>{
+                        dynamoDB.batchWriteItem(insertParams, function(err, data) {
+                            if (err) {
+                                resolve({
+                                    success: false,
+                                    message: err.message
+                                });
+                            } else {
+                                resolve({
+                                    success: true
+                                });
+                            }
+                        });
+                    })
+                }
         }else{
             return new Promise((resolve, reject)=>{
                resolve({
@@ -449,11 +454,5 @@ class Compactor{
         }) 
     }
 }
-
-let compactor = new Compactor('Compactor_20201229')
-var scanAllLiveCompactor = compactor.scanAllLiveCompactor()
-// scanAllLiveCompactor.then((result)=>{
-//     console.log(result)
-// })
 
 module.exports = Compactor
