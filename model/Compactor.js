@@ -129,15 +129,16 @@ class Compactor{
         })
     }
 
-    async buildParamsObj(equipmentID){
+    async buildParamsObj(equipmentID,tableName){
        
-        var weightEvents = await this.getEquipmentEvents(equipmentID)
+        var weightEvents = await this.getEquipmentEvents(equipmentID,tableName)
         if(weightEvents.length <= 0){
             return
         }
 
         var liveDynamo = this.liveDyDb
     
+        console.log(weightEvents)
         weightEvents = sortObjectsArray(weightEvents, 'ts')
     
         var lastIndex = weightEvents.length -1
@@ -277,29 +278,27 @@ class Compactor{
         var yymmdd = dateObj.split('/')
         yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
         var tableName = `Compactor_${yymmdd}`
-        tableName = `Do NOt exists`
+        var dynamodb = this.liveDyDb
         var response = await dynamodb.listTables(params).promise();
         response = response.TableNames
-        var tableName = []
+        var tableArr = []
         for(var i=0;i<response.length;i++){
             var resp = response[i]
             if(resp == tableName){
-                tableName.push(response[i])
+                tableArr.push(response[i])
             }
         }
 
-        if(tableName.length > 0){
+        if(tableArr.length > 0){
             for(var index=0;index<equipmentIDs.length;index++){
                 var equipmentID = equipmentIDs[index]
-                var weightEvents = await this.getEquipmentEvents(equipmentID)
+                var weightEvents = await this.getEquipmentEvents(equipmentID,tableName)
         
                 if(weightEvents.length <= 0){
                     continue;
                 }
                 //update record of weight events 
-                
-                // var test = await this.buildParamsObj('DS-816')
-                let parmasHeader = await this.buildParamsObj(equipmentID)
+                let parmasHeader = await this.buildParamsObj(equipmentID,tableName)
                 params.push(parmasHeader)
             }
     
