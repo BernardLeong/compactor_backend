@@ -315,6 +315,7 @@ class Compactor{
                     }
                 );
 
+                console.log(params)
                 if(params.length <= 0){
                     return new Promise((resolve, reject)=>{
                         resolve({success: false, message: 'Nothing to insert, no new events'})
