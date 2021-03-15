@@ -314,8 +314,6 @@ class Compactor{
                         secretAccessKey: 'Z4HU+YNhgDRRA33dQJTo9TslCT/x4vglhKw2kQMQ'
                     }
                 );
-
-                console.log(params)
                 if(params.length <= 0){
                     return new Promise((resolve, reject)=>{
                         resolve({success: false, message: 'Nothing to insert, no new events'})
@@ -344,8 +342,6 @@ class Compactor{
                 })
             })
         }
-
-        
     }
 
     async scanAllLiveCoordinates(){

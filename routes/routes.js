@@ -885,7 +885,6 @@ const AlarmRoutes = (app) =>{
 
                     delete(weightCollection[i]["insertID"])
                     delete(weightCollection[i]["latestTS"])
-                    delete(weightCollection[i]["recordTS"])
                 }
             }
             for(var i=0;i<weightCollection.length;i++){
