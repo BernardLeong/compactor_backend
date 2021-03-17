@@ -7,6 +7,7 @@ const awsIot = require('aws-iot-device-sdk');
 const sortObjectsArray = require('sort-objects-array');
 const writeFile = util.promisify(fs.writeFile)
 const Alarm = require('./../model/Alarm')
+const Excel = require('./../model/Excel')
 const Compactor = require('./../model/Compactor')
 const User = require('./../model/User')
 const Authetication = require('./../model/Authetication')
@@ -36,7 +37,7 @@ const Download = (app) => {
         var pdfcontroller = new Pdf_controller
         var sortObjectsArray = require('sort-objects-array');
         var encrypt = req.params.data
-        var encrypytkey = 'someKey'
+        var encrypytkey = 'somekey'
         var bytes  = CryptoJS.AES.decrypt(encrypt, encrypytkey);
         var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
         var starttime = decryptedData['from']
@@ -294,6 +295,119 @@ const Download = (app) => {
         var file = `${__dirname}/../${fileName}`;
         res.download(file);
     })
+
+    app.get('/generatexlxs/alarmreport/:data',async(req, res)=>{
+        var encrypt = req.params.data
+        var encrypytkey = 'somekey'
+        var bytes  = CryptoJS.AES.decrypt(encrypt, encrypytkey);
+        var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        var isSelectedID = false
+        var isDaterange = false
+        var selectedArr = []
+
+        var tempArr = []
+        var tempArray = []
+        var alarm = new Alarm
+        var alarmReport = await alarm.getAlarmReportData()
+        if(decryptedData.selectedID){
+            isSelectedID = true
+            selectedArr = decryptedData.selectedID
+        }
+
+        if(decryptedData.dateRange){
+            isDaterange = true
+        }
+
+        if(isSelectedID){
+            for(var i=0;i<selectedArr.length;i++){
+                var id = selectedArr[i]
+                for(var index=0;index<alarmReport.length;index++){
+                    var alarm = alarmReport[index]
+                    if(alarm.EquipmentID == id){
+                        tempArr.push(alarmReport[index])
+                    }
+                }
+            }
+            tempArr = sortObjectsArray(tempArr, 'ts', {order: 'desc'})
+            alarmReport = tempArr
+        }
+
+        if(isDaterange){
+            var dateRangeObject = decryptedData.dateRange
+            var startDate = dateRangeObject.starttime
+            var endDate = dateRangeObject.endtime
+
+            for(var i=0;i<alarmReport.length;i++){
+                var data = alarmReport[i]
+                if(startDate !== '' || endDate !== ''){
+                    if(startDate <= endDate){
+                        if(data.ts >= startDate && data.ts <= endDate){
+                            tempArray.push(alarmReport[i])
+                        }
+                    }
+                }
+            }
+            alarmReport = tempArray
+        }
+
+        if(isDaterange && isSelectedID){
+            var tempArray = []
+            var tempArr = []
+            var dateRangeObject = decryptedData.dateRange
+            var startDate = dateRangeObject.starttime
+            var endDate = dateRangeObject.endtime
+
+            for(var i=0;i<selectedArr.length;i++){
+                var id = selectedArr[i]
+                for(var index=0;index<alarmReport.length;index++){
+                    var alarm = alarmReport[index]
+                    if(alarm.EquipmentID == id){
+                        tempArr.push(alarmReport[index])
+                    }
+                }
+            }
+
+            for(var i=0;i<tempArr.length;i++){
+                var data = tempArr[i]
+                if(startDate !== '' || endDate !== ''){
+                    if(startDate <= endDate){
+                        if(data.ts >= startDate && data.ts <= endDate){
+                            tempArray.push(tempArr[i])
+                        }
+                    }
+                }
+            }
+
+            if(tempArray > 0){
+                tempArray = sortObjectsArray(tempArray, 'ts', {order: 'desc'})
+            }
+            alarmReport = tempArray
+        }
+
+        console.log(alarmReport)
+        alarmReport = sortObjectsArray(alarmReport, 'ts', {order: 'desc'})
+        var exportObj = new Excel
+        const workSheetColumnNames = [
+            "Alarm Clear Timestamp",
+            "Alarm Trigger Timestamp",
+            "Alarm Status",
+            "Alarm Type",
+            'Equipment ID',
+            "Duration for Alarm Deactivation"
+        ]
+        var workSheetName = 'alarmExcel'
+        var date = moment().format('L');
+        var yymmdd = date.split('/')
+        yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
+        
+        var filePath = `./alarmReport_${yymmdd}.xlsx`
+        exportObj.exportDataToExcel(alarmReport, workSheetColumnNames, workSheetName, filePath)
+
+        var file = `${__dirname}/../${filePath}`;
+        res.download(file);
+    })
+
+
 }
 
 const Login = (app) => {
@@ -458,7 +572,6 @@ const AlarmRoutes = (app) =>{
             }else{
                 //content in here
                 //decrypt time
-                var ciphertext = req.params.ciphertext
                 var alarm = new Alarm
                 var tablesAll = await alarm.readAllTables()
                 tablesAll = tablesAll.TableNames
