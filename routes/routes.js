@@ -384,7 +384,6 @@ const Download = (app) => {
             alarmReport = tempArray
         }
 
-        console.log(alarmReport)
         alarmReport = sortObjectsArray(alarmReport, 'ts', {order: 'desc'})
         var exportObj = new Excel
         const workSheetColumnNames = [
@@ -407,7 +406,139 @@ const Download = (app) => {
         res.download(file);
     })
 
+    app.get('/generatexlxs/weightReport/:data',async(req, res)=>{
+        var encrypt = req.params.data
+        var encrypytkey = 'somekey'
+        var bytes  = CryptoJS.AES.decrypt(encrypt, encrypytkey);
+        var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        var isSelectedID = false
+        var isDaterange = false
+        var selectedArr = []
 
+        var tempArr = []
+        var tempArray = []
+        var compactor = new Compactor
+        //marking
+        var compactorReport = await compactor.getEquipmentWeightCollection()
+        let equipments = await compactor.scanEquipmentCurrentStatus()
+
+        for(var index=0;index<equipments.length;index++){
+            var equipment = equipments[index]
+            for(var i=0;i<compactorReport.length;i++){
+                var weightEvent = compactorReport[i]
+                if(weightEvent.EquipmentID == equipment.EquipmentID){
+                    compactorReport[i]["shortAddress"] = equipment.shortAddress
+                }
+
+                compactorReport[i]["currentWeight"] = Math.round(weightEvent.currentWeight)
+                compactorReport[i]["collectedWeight"] = Math.round(parseFloat(weightEvent["Weight-Collected"]) )
+                compactorReport[i]["collectTS"] = weightEvent["collectedWeight-ts"]
+
+                delete(compactorReport[i]["insertID"])
+                delete(compactorReport[i]["latestTS"])
+            }
+        }
+
+        for(var i=0;i<compactorReport.length;i++){
+            delete(compactorReport[i]["collectedWeight-ts"])
+            delete(compactorReport[i]["Weight-Collected"])
+        }
+
+        if(decryptedData.selectedID){
+            isSelectedID = true
+            selectedArr = decryptedData.selectedID
+        }
+
+        if(decryptedData.dateRange){
+            isDaterange = true
+        }
+
+        if(isSelectedID){
+            for(var i=0;i<selectedArr.length;i++){
+                var id = selectedArr[i]
+                for(var index=0;index<compactorReport.length;index++){
+                    var alarm = compactorReport[index]
+                    if(alarm.EquipmentID == id){
+                        tempArr.push(compactorReport[index])
+                    }
+                }
+            }
+            tempArr = sortObjectsArray(tempArr, 'ts', {order: 'desc'})
+            compactorReport = tempArr
+        }
+
+        if(isDaterange){
+            var dateRangeObject = decryptedData.dateRange
+            var startDate = dateRangeObject.starttime
+            var endDate = dateRangeObject.endtime
+            
+            for(var i=0;i<compactorReport.length;i++){
+                var data = compactorReport[i]
+                if(startDate !== '' || endDate !== ''){
+                    if(startDate <= endDate){
+                        if(data.ts >= startDate && data.ts <= endDate){
+                            tempArray.push(compactorReport[i])
+                        }
+                    }
+                }
+            }
+            compactorReport = tempArray
+        }
+
+        if(isDaterange && isSelectedID){
+            var tempArray = []
+            var tempArr = []
+            var dateRangeObject = decryptedData.dateRange
+            var startDate = dateRangeObject.starttime
+            var endDate = dateRangeObject.endtime
+
+            for(var i=0;i<selectedArr.length;i++){
+                var id = selectedArr[i]
+                for(var index=0;index<compactorReport.length;index++){
+                    var alarm = compactorReport[index]
+                    if(alarm.EquipmentID == id){
+                        tempArr.push(compactorReport[index])
+                    }
+                }
+            }
+
+            for(var i=0;i<tempArr.length;i++){
+                var data = tempArr[i]
+                if(startDate !== '' || endDate !== ''){
+                    if(startDate <= endDate){
+                        if(data.ts >= startDate && data.ts <= endDate){
+                            tempArray.push(tempArr[i])
+                        }
+                    }
+                }
+            }
+
+            if(tempArray > 0){
+                tempArray = sortObjectsArray(tempArray, 'ts', {order: 'desc'})
+            }
+            compactorReport = tempArray
+        }
+
+        compactorReport = sortObjectsArray(compactorReport, 'ts', {order: 'desc'})
+        var exportObj = new Excel
+        const workSheetColumnNames = [
+            "Equipment ID",
+            "Short Address",
+            "Weight Collection Time",
+            "Amount Collected",
+            'Equipment Remaining Weight'
+        ]
+        var workSheetName = 'alarmExcel'
+        var date = moment().format('L');
+        var yymmdd = date.split('/')
+        yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
+        
+        var filePath = `./weightReport_${yymmdd}.xlsx`
+        exportObj.exportDataToExcel(compactorReport, workSheetColumnNames, workSheetName, filePath, 'weight')
+
+        var file = `${__dirname}/../${filePath}`;
+        res.download(file);
+    })
 }
 
 const Login = (app) => {

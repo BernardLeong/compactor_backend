@@ -15,10 +15,17 @@ class Excel{
         xlsx.writeFile(workBook, path.resolve(filePath))
     } 
 
-    exportDataToExcel = (eventData, workSheetColumnNames, workSheetName, filePath) =>{
-        const data = eventData.map(evntData => {
+    exportDataToExcel = (eventData, workSheetColumnNames, workSheetName, filePath, exportType='alarm') =>{
+
+        var data = eventData.map(evntData => {
             return [evntData.ClearedTS, evntData.ts, evntData.Status, evntData.Type, evntData.EquipmentID, evntData.timeDifference]
         })
+
+        if(exportType == 'weight'){
+            data = eventData.map(evntData => {
+                return [evntData.EquipmentID, evntData.shortAddress, evntData.collectTS, evntData.collectedWeight, evntData.currentWeight]
+            })
+        }
         this.exportExcel(data, workSheetColumnNames, workSheetName, filePath)
     }
 
