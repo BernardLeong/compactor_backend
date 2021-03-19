@@ -514,7 +514,7 @@ const Download = (app) => {
             }
 
             if(tempArray > 0){
-                tempArray = sortObjectsArray(tempArray, 'ts', {order: 'desc'})
+                tempArray = sortObjectsArray(tempArray, 'collectTS', {order: 'desc'})
             }
             compactorReport = tempArray
         }
