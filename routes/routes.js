@@ -476,7 +476,7 @@ const Download = (app) => {
                 var data = compactorReport[i]
                 if(startDate !== '' || endDate !== ''){
                     if(startDate <= endDate){
-                        if(data.ts >= startDate && data.ts <= endDate){
+                        if(data.collectTS >= startDate && data.collectTS <= endDate){
                             tempArray.push(compactorReport[i])
                         }
                     }
@@ -506,7 +506,7 @@ const Download = (app) => {
                 var data = tempArr[i]
                 if(startDate !== '' || endDate !== ''){
                     if(startDate <= endDate){
-                        if(data.ts >= startDate && data.ts <= endDate){
+                        if(data.collectTS >= startDate && data.collectTS <= endDate){
                             tempArray.push(tempArr[i])
                         }
                     }
