@@ -7,6 +7,8 @@ const app = express()
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const Mapping_controller = require('./controller/Map_controller')
+const cron = require('node-cron');
+var AWS = require("aws-sdk");
 
 app.use(cors())
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -20,6 +22,35 @@ CompactorRoutes(app)
 Login(app)
 Default(app)
 Download(app)
+
+cron.schedule('* * * * *', ()=> {
+    var docClient = new AWS.DynamoDB.DocumentClient(
+        {
+            region: 'ap-southeast-1',
+            accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
+            secretAccessKey: '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'
+        }
+    );
+    
+    var table = "testTable";
+    
+        var params = {
+            TableName:table,
+            Item:{
+                "id": Date.now().toString(),
+                "content" : "haha"
+            }
+    };
+    docClient.put(params, function(err, data) {
+        if (err) {
+            console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+        } else {
+            console.log("Added item:", JSON.stringify(data, null, 2));
+        }
+    });
+});
+
+
 
 app.post('/getFullAddresses',(req, res)=>{
     //return Arr of addressSearchValues
@@ -48,4 +79,4 @@ app.post('/returnCoordinates',(req, res)=>{
     // res.json({'hii' : "result"})
 })
 
-app.listen(8080)
+app.listen(80)
