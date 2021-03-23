@@ -227,11 +227,31 @@ class Compactor{
         }
         var params = {}
 
+        var lastid = await this.getlastEquipmentInfoID()
+        lastid = lastid.Item.lastid
+        var nextid = lastid.split('-')
+
+        if(parseInt(nextid[1]) > 100 ){
+            var nnextid = parseInt(nextid[1]) + 1
+            nnextid = `${nnextid}`
+        }
+        if(parseInt(nextid[1]) < 10){
+            var nnextid = parseInt(nextid[1]) + 1
+            nnextid = `00${nnextid}`
+        }else if(parseInt(nextid[1]) < 100){
+            var nnextid = parseInt(nextid[1]) + 1
+            nnextid = `0${nnextid}`
+        }
+
+
+        nextid = `${nextid[0]}-${nnextid}`
+        
         if(weightDifference > 50 && minimum.ts > maximum.ts){
+            var updateLastID = await this.updateLastEquipmentInfoID(nextid)
             params['EquipmentID'] = { "S" : minimum['ID']}
             params['collectedWeight-ts'] = { "S" : minimum['ts'] }
             params['recordTS'] = { "S" : moment().format() };
-            params['insertID'] = { "S" : `ID-${parseInt(Math.random()*100)}-${minimum['ID']}` };
+            params['insertID'] = { "S" : nextid };
             params['currentWeight'] = { "S" : currentWeight.toString() };
             params['Weight-Collected'] = { "S" : weightDifference.toString() }
             params['latestTS'] = { "S" : latestRecord.ts}
@@ -250,15 +270,59 @@ class Compactor{
         
         //latestTS will be the latest event TS looked thru based on EquipmentID
     
-        // if(weightDifference > 50){
-        //     if(minimum.ts > maximum.ts){
-        //         //save record into weightcollected information here
-        //         params['Weight-Collected'] = { "S" : weightDifference.toString() }
-        //         // saveRecordToEquipmentWeightCollection(liveDynamo,params)
-        //     }
-        // }
+        if(weightDifference > 50){
+            if(minimum.ts > maximum.ts){
+                //save record into weightcollected information here
+                params['Weight-Collected'] = { "S" : weightDifference.toString() }
+                // saveRecordToEquipmentWeightCollection(liveDynamo,params)
+            }
+        }
 
-        // return putReq
+        return putReq
+    }
+
+    getlastEquipmentInfoID(){
+        var tableName = "lastID"
+        //marka
+        var livedocClient = this.livedocClient
+        var params = {
+            TableName: tableName,
+            Key:{
+                "table" : "EquipmentWeightCollection"
+            }
+        };
+        return new Promise((resolve,reject)=>{
+            livedocClient.get(params, (err, data)=>{
+                if (err) {
+                    reject("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+                } else {
+                    resolve(data)
+                }
+            });
+        }) 
+    }
+
+    updateLastEquipmentInfoID(nextid){
+        var tableName = 'lastID'
+        var livedocClient = this.livedocClient
+        var params = {
+            TableName:tableName,
+            Key:{
+                "table": "EquipmentWeightCollection"
+            },
+            UpdateExpression: "set lastid = :lastid",
+            ExpressionAttributeValues:{
+                ":lastid":nextid,
+            },
+            ReturnValues:"UPDATED_NEW"
+        };
+        livedocClient.update(params, (err, data)=>{
+            if (err) {
+                console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
+            } else {
+                console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
+            }
+        });
     }
 
     async saveWeightCollected(){
@@ -268,6 +332,8 @@ class Compactor{
             'DS-819','DS-820','DS-821','DS-822','DS-823','MM10-804','MM10-805','MM10-806','MM10-807','MM10-808',
             'MM8-800','MM8-801','MM8-802','MM8-803'
         ]
+
+        var lastid = await this.getlastEquipmentInfoID()
     
         //after looking thru the equipment IDS
         let params = []
@@ -314,6 +380,7 @@ class Compactor{
                         secretAccessKey: 'Z4HU+YNhgDRRA33dQJTo9TslCT/x4vglhKw2kQMQ'
                     }
                 );
+
                 if(params.length <= 0){
                     return new Promise((resolve, reject)=>{
                         resolve({success: false, message: 'Nothing to insert, no new events'})

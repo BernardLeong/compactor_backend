@@ -7,14 +7,14 @@ const app = express()
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const Mapping_controller = require('./controller/Map_controller')
+const scheduleCron = require('./routes/cron')
 const cron = require('node-cron');
-var AWS = require("aws-sdk");
 
 app.use(cors())
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 const { AlarmRoutes, CompactorRoutes, Login, Default, Download} = require('./routes/routes')
-
+const Compactor = require('./model/Compactor')
 //onMachine
 
 AlarmRoutes(app)
@@ -22,6 +22,9 @@ CompactorRoutes(app)
 Login(app)
 Default(app)
 Download(app)
+
+var compactor = new Compactor
+scheduleCron(cron,compactor)
 
 // cron.schedule('* * * * *', ()=> {
 //     var docClient = new AWS.DynamoDB.DocumentClient(
