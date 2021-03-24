@@ -670,6 +670,90 @@ const Login = (app) => {
 
 const AlarmRoutes = (app) =>{
 
+    app.get('/getBarData/:month',async(req, res)=>{
+
+        //get bar data for alarm tiggered for the month
+        //get all the alarm events for all time
+        var alarm = new Alarm
+        var tablesAll = await alarm.readAllTables()
+        tablesAll = tablesAll.TableNames
+        var dateRange = []
+        for(var i=0;i<tablesAll.length;i++){
+            if(tablesAll[i].includes('Alarm_2')){
+                dateRange.push(tablesAll[i])
+            }
+        }
+        var alarmdata = []
+        //get all the data from the date range
+        for(var i=0;i<dateRange.length;i++){
+            var tableName = dateRange[i]
+            var alarm = new Alarm(tableName)
+            var alarmData = await alarm.getAllLiveAlarm()
+            alarmdata.push(alarmData.Items)
+        }
+
+
+        alarmdata = alarmdata.flat()
+        if(req.params.month == 'today'){
+            //markkk
+            //date example 2021-01-07 14:17:28
+            
+            //filter the alarmData to today
+            alarmdata = alarmdata.map((alarm)=>{
+                var date = moment().format('L');
+                var yymmdd = date.split('/')
+                var startTime = `${yymmdd[2]}-${yymmdd[0]}-${yymmdd[1]} 00:00:00`
+                var endTime = `${yymmdd[2]}-${yymmdd[0]}-${yymmdd[1]} 23:59:59`
+                if(startTime <= alarm.ts && endTime >= alarm.ts){
+                    return alarm
+                }
+            })
+
+            alarmdata = alarmdata.filter(Boolean)
+
+            var severeAlarm = ['FireAlarm', 'DischargeGateMotorTrip', 'DischargeScrewMotorTrip']
+
+            alarmdata = severeAlarm.map((sAl)=>{
+                var alarmData = alarmdata.map((alarm)=>{
+                    if(alarm.Type == sAl){
+                        return alarm
+                    }
+                })
+
+                return alarmData
+            })
+            alarmdata = alarmdata.flat()
+        }
+        
+        alarmdata = alarmdata.filter(Boolean)
+
+        var dataObj = {}
+        dataObj['success'] = true
+
+        for(var i=0;i<severeAlarm.length;i++){
+            var sAl = severeAlarm[i]
+            var tempArr = []
+            dataObj[sAl] = 0
+        }
+
+        for(var i=0;i<severeAlarm.length;i++){
+            var sAl = severeAlarm[i]
+            var tempArr = []
+            for(var x=0;x<alarmdata.length;x++){
+                var alarm = alarmdata[x]
+                // obj[sAl] = 0
+                if(alarm.Type == sAl){
+                    tempArr.push(alarm)
+                    dataObj[sAl] = tempArr.length
+                }
+            }
+        }
+
+        res.json(
+            dataObj
+        )
+    })
+
     app.get('/getAlarmReport/all',async(req, res)=>{
         var type = 'user'
         if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){

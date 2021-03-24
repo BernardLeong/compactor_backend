@@ -8,8 +8,6 @@ const scheduleCron = (cron, compactor) => {
     })
 }
 
-
-
 module.exports = scheduleCron
 
 
