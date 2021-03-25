@@ -230,12 +230,12 @@ class Compactor{
         var lastid = await this.getlastEquipmentInfoID()
         lastid = lastid.Item.lastid
         var nextid = lastid.split('-')
+        // console.log(lastid)
 
-        if(parseInt(nextid[1]) > 100 ){
+        if(parseInt(nextid[1]) >= 100 ){
             var nnextid = parseInt(nextid[1]) + 1
             nnextid = `${nnextid}`
-        }
-        if(parseInt(nextid[1]) < 10){
+        }else if(parseInt(nextid[1]) < 10){
             var nnextid = parseInt(nextid[1]) + 1
             nnextid = `00${nnextid}`
         }else if(parseInt(nextid[1]) < 100){

@@ -1323,10 +1323,7 @@ const CompactorRoutes = (app) =>{
         })
     })
     //can be done by admin
-    app.post('/compactorDetailReport',async(req, res)=>{
-        
-    })
-    
+
     app.post('/editCompactor',async(req,res)=>{
         //only done by admin
         var type = 'user'
