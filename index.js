@@ -15,6 +15,9 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 const { AlarmRoutes, CompactorRoutes, Login, Default, Download} = require('./routes/routes')
 const Compactor = require('./model/Compactor')
+const User = require('./model/User')
+const Auth = require('./model/Authetication')
+
 //onMachine
 
 AlarmRoutes(app)
@@ -24,7 +27,9 @@ Default(app)
 Download(app)
 
 var compactor = new Compactor
-scheduleCron(cron,compactor)
+var user = new User
+var auth = new Auth
+scheduleCron(cron,compactor, user, auth)
 
 // cron.schedule('* * * * *', ()=> {
 //     var docClient = new AWS.DynamoDB.DocumentClient(

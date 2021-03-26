@@ -107,6 +107,58 @@ class User{
         })
     }
 
+    async getListofTokens(){
+        //tokenmark
+        var livedocClient = this.livedocClient
+        var tableName = 'accesscontroltable'
+        var params = {
+          TableName: tableName, // give it your table name 
+          Select: "ALL_ATTRIBUTES"
+        };
+      
+        return new Promise((resolve, reject)=>{
+            livedocClient.scan(params, (err, data)=> {
+                if (err) {
+                    reject(err)
+                 } else {
+                    var dataItems = data.Items
+                    dataItems = dataItems.map((dI)=>{
+                        if(dI.valid){
+                            return dI.token
+                        }
+                    })
+                    resolve(dataItems)
+                 }
+            })
+        });
+    }
+
+    async getListofInvalidTokens(){
+        //tokenmark
+        var livedocClient = this.livedocClient
+        var tableName = 'accesscontroltable'
+        var params = {
+          TableName: tableName, // give it your table name 
+          Select: "ALL_ATTRIBUTES"
+        };
+      
+        return new Promise((resolve, reject)=>{
+            livedocClient.scan(params, (err, data)=> {
+                if (err) {
+                    reject(err)
+                 } else {
+                    var dataItems = data.Items
+                    dataItems = dataItems.map((dI)=>{
+                        if(!dI.valid){
+                            return dI.token
+                        }
+                    })
+                    resolve(dataItems)
+                 }
+            })
+        });
+    }
+
     getUserIDFromToken(token){
         var docClient = this.docClient
         var params = {

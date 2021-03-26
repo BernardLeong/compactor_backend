@@ -125,6 +125,24 @@ class Authetication{
         })
     }
 
+    deleteToken(token){
+        var tableName = this.accesscontroltable
+        var livedocClient = this.livedocClient
+        var params = {
+            TableName:tableName,
+            Key:{
+                "token": token
+            },
+        };
+        livedocClient.delete(params, (err, data)=> {
+            if (err) {
+                console.error("Unable to delete item. Error JSON:", JSON.stringify(err, null, 2));
+            } else {
+                console.log("DeleteItem succeeded:", JSON.stringify(data, null, 2));
+            }
+        });
+    }
+
     invalidateToken(token){
         var tableName = this.accesscontroltable
         var livedocClient = this.livedocClient
