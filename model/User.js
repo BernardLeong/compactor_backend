@@ -94,6 +94,44 @@ class User{
         });
     }
 
+    async editUser(userid, uDetails){
+        var { username, password, userType} = uDetails
+        var livedocClient = this.livedocClient
+        var updateExpression = "set username = :username, userType = :userType, password = :password"
+       
+        var tableName = 'users'
+        if(password.length <= 0){
+            updateExpression = "set username = :username, userType = :userType"
+            var expressionObj = {
+                ":username" : username,
+                ":userType" : userType
+            }
+        }else{
+            let encryptedPW = this.encryptPassword(password)
+            var expressionObj = {
+                ":username" : username,
+                ":userType" : userType,
+                ":password" : encryptedPW
+            }
+        }
+        var params = {
+            TableName:tableName,
+            Key:{
+                "id": userid
+            },
+            UpdateExpression: updateExpression,
+            ExpressionAttributeValues: expressionObj,
+            ReturnValues:"UPDATED_NEW"
+        };
+        livedocClient.update(params, (err, data)=>{
+            if (err) {
+                console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
+            } else {
+                console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
+            }
+        });
+    }
+
     async getListofUsers(){
         var livedocClient = this.livedocClient
         var tableName = 'users'
@@ -131,6 +169,31 @@ class User{
                     dataItems = dataItems.map((dI)=>{
                         if(!dI.valid){
                             return dI.token
+                        }
+                    })
+                    resolve(dataItems)
+                 }
+            })
+        });
+    }
+
+    getuserIDFromUserName(username){
+        var livedocClient = this.livedocClient
+        var tableName = 'users'
+        var params = {
+          TableName: tableName, // give it your table name 
+          Select: "ALL_ATTRIBUTES"
+        };
+      
+        return new Promise((resolve, reject)=>{
+            livedocClient.scan(params, (err, data)=> {
+                if (err) {
+                    reject(err)
+                 } else {
+                    var dataItems = data.Items
+                    dataItems = dataItems.map((user)=>{
+                        if(user.username == username){
+                            return user.id
                         }
                     })
                     resolve(dataItems)
@@ -218,30 +281,6 @@ class User{
                 }
             })
         });
-    }
-
-    getdynamicTable(type){
-        if(type == 'user'){
-            var tableName = this.userTable
-            var userid = 'userid'
-        }
-
-        if(type == 'serviceUser'){
-            var tableName = this.engineerTable
-            var userid = 'serviceUserID'
-        }
-
-        if(type == 'admin'){
-            var tableName = this.adminTable
-            var userid = 'adminUserID'
-        }
-
-        let dynamicObj = {
-            "tableName" : tableName,
-            "userid" : userid
-        }
-
-        return dynamicObj
     }
 
     async saveNewUser(username, password, type){

@@ -93,42 +93,6 @@ class Authetication{
         });
     }
 
-    async getUserNameFromToken(token){
-        var livedocClient = this.livedocClient
-        //opkej0fjf
-        var params = {
-            TableName: this.accesscontroltable,
-            Key:{
-                "token" : token
-            }
-        };
-        var params = {
-            TableName: this.accesscontroltable, // give it your table name 
-            ProjectionExpression: "#token, #userid",
-            FilterExpression: "#token = :token",
-            ExpressionAttributeNames: {
-                "#token": "token",
-                "#userid": "userid",
-            },
-            ExpressionAttributeValues: {
-                ":token": token
-            }
-        };
-    
-        return new Promise((resolve, reject)=>{
-            livedocClient.scan(params, async(err, data)=> {
-                if (err) {
-                    reject(err)
-                } else {
-                    var userid = data.Items[0]
-                    userid = userid.userid
-                    var username = await this.getUserNameFromID(userid)
-                    resolve(username)
-                }
-            })
-        });
-    }
-
     checkToken(token){
         var tableName = this.accesscontroltable
         var livedocClient = this.livedocClient        

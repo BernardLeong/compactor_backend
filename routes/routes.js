@@ -142,6 +142,80 @@ const Download = (app) => {
 
 const Login = (app) => {
 
+    app.post('/edituser',async(req, res)=>{
+        let auth = new Authetication
+        let user = new User
+        
+        let apikey = await auth.getAPIKeys(req.headers.apikey)
+        let type = apikey[0]
+        type = type.type
+
+        if(apikey.length <= 0){
+            res.json({
+                'success' : false,
+                'error' : 'API Keys Incorrect'
+            })
+            return;
+        }
+
+        var accesstoken = null
+
+        if(req.headers.authorization){
+            var token = req.headers.authorization.split(' ')
+            if(token[0] == 'Bearer'){
+                accesstoken = token[1]
+            }else{
+                res.json({
+                    'success' : false,
+                    'error' : 'Please use bearer token to log in'
+                })
+            }
+        }
+
+        if(accesstoken){
+            var checktoken = await auth.checkToken(accesstoken)
+            if(checktoken <= 0){
+                res.json({
+                    'success' : false,
+                    'error' : 'Invalid token'
+                })
+            }else{
+                if(type == "adminUser"){
+                    //edit a user 
+                    let username = req.body.username
+                    let password = req.body.password
+                    let userType = req.body.userType
+                    let userid = req.body.userid
+
+                    let uDetail = {
+                        username : username,
+                        password : password,
+                        userType : userType
+                    }
+                        //edit user and password
+                    let editUser = await user.editUser(userid, uDetail)
+                    res.json({
+                        'success' : true,
+                    })
+                }else{
+                    res.json(
+                        {
+                            'success' : false,
+                            'message' : "Not enough access rights"
+                        }
+                    )
+                }
+            }
+        }else{
+            res.json(
+                {
+                    'success' : false,
+                    'message' : 'Please log in first'
+                }
+            )
+        }
+    })
+
     app.get('/listOfUsers',async(req, res)=>{
         let auth = new Authetication
         let user = new User
