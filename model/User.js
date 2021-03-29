@@ -94,6 +94,25 @@ class User{
         });
     }
 
+    async getListofUsers(){
+        var livedocClient = this.livedocClient
+        var tableName = 'users'
+        var params = {
+          TableName: tableName, // give it your table name 
+          Select: "ALL_ATTRIBUTES"
+        };
+      
+        return new Promise((resolve, reject)=>{
+            livedocClient.scan(params, (err, data)=> {
+                if (err) {
+                    reject(err)
+                 } else {
+                    var dataItems = data.Items
+                    resolve(dataItems)
+                 }
+            })
+        });
+    }
     async getListofInvalidTokens(){
         //tokenmark
         var livedocClient = this.livedocClient
