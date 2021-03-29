@@ -182,7 +182,10 @@ const Login = (app) => {
             }else{
                 if(type == "adminUser"){
                     let getListofUsers = await user.getListofUsers()
-    
+                    getListofUsers = getListofUsers.map((user)=>{
+                        delete(user['password'])
+                        return user
+                    })
                     res.json(
                         {
                             'success' : true,
