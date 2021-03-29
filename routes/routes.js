@@ -195,7 +195,8 @@ const Login = (app) => {
                 }else{
                     res.json(
                         {
-                            'success' : false,
+                            'success' : true,
+                            'userLists' : [],
                             'message' : "Not enough access rights"
                         }
                     )
