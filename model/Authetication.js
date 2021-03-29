@@ -63,24 +63,16 @@ class Authetication{
         })
     }
 
-    checkToken(token, type){
+    checkToken(token){
         var tableName = this.accesscontroltable
         var livedocClient = this.livedocClient        
-        var idField = 'userid'
-        if(type == 'admin'){
-            idField = 'adminUserID'
-        }
-        if(type == 'serviceUser'){
-            idField = 'serviceUserID'
-        }
 
         var params = {
             TableName: tableName, // give it your table name 
-            ProjectionExpression: "#token, #uid",
+            ProjectionExpression: "#token",
             FilterExpression: "#token = :token",
             ExpressionAttributeNames: {
                 "#token": "token",
-                '#uid': idField
             },
             ExpressionAttributeValues: {
                 ":token": token
@@ -182,7 +174,8 @@ class Authetication{
                             resolve(
                                 {
                                     "success" : true,
-                                    "token" : token
+                                    "token" : token,
+                                    "usertype" : userDetails.userType
                                 }
                             )
                     }else{
@@ -207,7 +200,5 @@ class Authetication{
         })
     }
 }
-
-
 
 module.exports = Authetication

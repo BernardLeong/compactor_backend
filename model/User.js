@@ -360,9 +360,4 @@ class User{
     }
 }
 
-var user = new User
-var bytes = user.decryptPassword("U2FsdGVkX18Gh1zpSxw3qEoa3OWU5tMeYjbBgW9eOX4=")
-var decryptedPW = JSON.parse(bytes.toString(CryptoJS.enc.Utf8))
-console.log(decryptedPW)
-
 module.exports = User

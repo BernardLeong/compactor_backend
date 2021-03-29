@@ -644,10 +644,9 @@ const Login = (app) => {
         if(req.body.token){
 
             let token = req.body.token
-            let type = req.body.type
             //search token whether is a valid token
             let auth = new Authetication
-            auth.checkToken(token, type).then((count)=>{
+            auth.checkToken(token).then((count)=>{
                 if(count >= 1){
                     //invalid token
                     auth.invalidateToken(token)
@@ -664,7 +663,6 @@ const Login = (app) => {
             }))
         }
     })
-
 }
 
 const AlarmRoutes = (app) =>{
