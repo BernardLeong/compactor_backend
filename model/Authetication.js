@@ -8,9 +8,10 @@ class Authetication{
     constructor(){
         this.tokenSign = '6jFLnuPANxk4UzePcRSTRkwXSqxhAMf2FAm4VFvV',
         this.encrypytkey = 'mwPWxZ4caYNzENpCBpWzMYxy4dMetJ743qNebkJh',
-        this.userTable = 'user',
+        this.userTable = 'users',
         this.lastID = 'lastID',
-        this.accesscontroltable = 'accesscontroltable'
+        this.accesscontroltable = 'accesscontroltable',
+        this.apikeyTable = 'apiKeys',
         this.livedocClient = new AWS.DynamoDB.DocumentClient(
             {
                 region: 'ap-southeast-1',
@@ -18,6 +19,33 @@ class Authetication{
                 secretAccessKey: 'Z4HU+YNhgDRRA33dQJTo9TslCT/x4vglhKw2kQMQ'
             }
         );
+    }
+
+    async getAPIKeys(apikey){
+        //apikey
+        var livedocClient = this.livedocClient
+        var tableName = this.apikeyTable
+        var params = {
+          TableName: tableName, // give it your table name 
+          Select: "ALL_ATTRIBUTES"
+        };
+      
+        return new Promise((resolve, reject)=>{
+            livedocClient.scan(params, (err, data)=> {
+                if (err) {
+                    reject(err)
+                 } else {
+                    var dataItems = data.Items
+                    dataItems = dataItems.map((dI)=>{
+                        if(dI.apiKey === apikey){
+                            return {apiKey: dI.apiKey , type: dI.type }
+                        }
+                    })
+                    dataItems = dataItems.filter(Boolean)
+                    resolve(dataItems)
+                 }
+            })
+        });
     }
     
     signToken(username, password){
@@ -28,39 +56,77 @@ class Authetication{
         );
         return token
     }
-
-    getUserNameFromToken(token){
+    async getUserNameFromID(userid){
+        var tableName = this.userTable
         var livedocClient = this.livedocClient
+
+        var params = {
+            TableName: tableName,
+            Key:{
+                "id" : userid
+            }
+        };
+        var params = {
+            TableName: tableName, // give it your table name 
+            ProjectionExpression: "#username, #id",
+            FilterExpression: "#id = :id",
+            ExpressionAttributeNames: {
+                "#username": "username",
+                "#id": "id",
+
+            },
+            ExpressionAttributeValues: {
+                ":id": userid
+            }
+        };
+    
+        return new Promise((resolve, reject)=>{
+            livedocClient.scan(params, (err, data)=> {
+                if (err) {
+                    reject(err)
+                } else {
+                    var username = data.Items[0]
+                    username = username.username
+                    resolve(username)
+                }
+            })
+        });
+    }
+
+    async getUserNameFromToken(token){
+        var livedocClient = this.livedocClient
+        //opkej0fjf
         var params = {
             TableName: this.accesscontroltable,
             Key:{
                 "token" : token
             }
         };
-        return new Promise((resolve,reject)=>{
-            livedocClient.get(params, async(err, data)=>{
+        var params = {
+            TableName: this.accesscontroltable, // give it your table name 
+            ProjectionExpression: "#token, #userid",
+            FilterExpression: "#token = :token",
+            ExpressionAttributeNames: {
+                "#token": "token",
+                "#userid": "userid",
+            },
+            ExpressionAttributeValues: {
+                ":token": token
+            }
+        };
+    
+        return new Promise((resolve, reject)=>{
+            livedocClient.scan(params, async(err, data)=> {
                 if (err) {
-                    reject("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+                    reject(err)
                 } else {
-                    var type = 'user'
-                    var userid = ''
-
-                    if(data.Item.adminUserID){
-                        type = 'admin'
-                        userid = data.Item.adminUserID
-                    }else if(data.Item.serviceUserID){
-                        type = 'serviceUser'
-                        userid = data.Item.serviceUserID
-                    }else{
-                        userid = data.Item.userid
-                    }
-                    let user = new User
-                    let userDetails = await user.getCurrentUser(userid, type)
-                    // userDetails
-                    resolve(userDetails)
+                    var userid = data.Items[0]
+                    userid = userid.userid
+                    var username = await this.getUserNameFromID(userid)
+                    resolve(username)
                 }
-            });
-        })
+            })
+        });
     }
 
     checkToken(token){
@@ -201,4 +267,10 @@ class Authetication{
     }
 }
 
+// let auth = new Authetication
+// let getUserNameFromToken = auth.getUserNameFromToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImJlcm5hcmQiLCJwYXNzd29yZCI6ImFzZGZhc2RmIiwiaWF0IjoxNjE2OTg1ODA1fQ.W343CONGt3fa6xovCqHonm3SjVdcz7bwkwsQc_yAuak")
+
+// getUserNameFromToken.then((result)=>{
+//     console.log(result)
+// })
 module.exports = Authetication

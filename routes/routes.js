@@ -29,273 +29,6 @@ const Default = (app) => {
 }
 
 const Download = (app) => {
-    app.get('/generatePDF/:data',async(req, res)=>{
-        //mark
-        var CryptoJS = require("crypto-js");
-        var pdf = require('html-pdf');
-        var now = moment().format('MMMM Do YYYY, h:mm:ss a');
-        var pdfcontroller = new Pdf_controller
-        var sortObjectsArray = require('sort-objects-array');
-        var encrypt = req.params.data
-        var encrypytkey = 'somekey'
-        var bytes  = CryptoJS.AES.decrypt(encrypt, encrypytkey);
-        var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-        var starttime = decryptedData['from']
-        var endtime = decryptedData['to']
-        let dateObj = moment().format('L');
-        var yymm = dateObj.split('/')
-        yymm = `${yymm[2]}${yymm[0]}`
-        var dynamicAlarmTable = `Alarm_${yymm}`
-
-        var alarm = new Alarm(dynamicAlarmTable)
-        var allAlarmInfo = await alarm.getAllClearedAlarm()
-        for(var i=0;i<allAlarmInfo.length;i++){
-            var alarmObj = new Alarm
-            var alarmItem = allAlarmInfo[i]
-            var earlier = new Date(alarmItem.ts)
-            var later = new Date(alarmItem.ClearedTS)
-            var time_difference = alarmObj.time_difference(later, earlier)
-
-            var hours = Math.floor(time_difference/60)
-            var days = Math.floor(hours/24)
-            var minutes = time_difference
-            
-            if(hours < 1){
-                hours = 0
-            }
-            
-            if(days < 1){
-                days = 0
-            }
-            
-            if(days){
-                hours = hours - (days * 24)
-
-                if(hours == 1){
-                    time_difference = `${days} day ${hours} hour`
-                }else{
-                    time_difference = `${days} days ${hours} hours`
-                }
-            }else if(!days && hours){
-                minutes = minutes - (hours *60)
-                if(hours == 1){
-                    if(minutes == 1){
-                        time_difference = `${hours} hour ${minutes} minute`
-                    }else{
-                        time_difference = `${hours} hour ${minutes} minutes`
-                    }
-                }else{
-                    if(minutes == 1){
-                        time_difference = `${hours} hours ${minutes} minute`
-                    }else{
-                        time_difference = `${hours} hours ${minutes} minutes`
-                    }
-                }
-            }else{
-                if(minutes < 1){
-                    time_difference = `Less than a minute`
-                }else if(minutes == 1){
-                    time_difference = `${minutes} minute`
-                }else{
-                    time_difference = `${minutes} minutes`
-                }
-            }
-            allAlarmInfo[i]['EquipmentID'] = allAlarmInfo[i]['ID']
-            allAlarmInfo[i]['EquipmentType'] = allAlarmInfo[i]['Type']
-            allAlarmInfo[i]['timeDifference'] = time_difference
-
-            delete(allAlarmInfo[i]['ID'])
-            delete(allAlarmInfo[i]['EquipmentType'])
-        }
-
-        var renderAlarms = []
-
-        for(var i=0;i<allAlarmInfo.length;i++){
-            if(starttime !== endtime){
-                var todaydate = moment(allAlarmInfo[i]['ts']).format()
-                todaydate = new Date(todaydate).getTime()
-                var startTime = new Date(starttime).getTime()
-                var endTime = new Date(endtime).getTime()
-                if(startTime <= todaydate && endTime >= todaydate){
-                    renderAlarms.push(allAlarmInfo[i])
-                }
-            }
-            else{
-                var todaydate = moment(allAlarmInfo[i]['ts']).format()
-                todaydate = new Date(todaydate).getTime()
-                var startTime = new Date(starttime).getTime()
-                var endTime = new Date(endtime).getTime()
-                if(startTime <= todaydate){
-                    renderAlarms.push(allAlarmInfo[i])
-                }
-            }
-        }        
-        //
-        for(var i=0;i<renderAlarms.length;i++){
-            var renderAlarm = renderAlarms[i]
-            var ts = renderAlarm.ts
-            ts = ts.split(' ')
-            renderAlarms[i]['timestampday'] = ts[0]
-            renderAlarms[i]['timestamptime'] = ts[1]
-            var clearts = renderAlarm.ClearedTS
-            if(typeof(clearts) == 'undefined'){
-                renderAlarms[i]['cleartimestampday'] = ''
-                renderAlarms[i]['cleartimestamptime'] = ''
-            }else{
-                clearts = clearts.split(' ')
-                renderAlarms[i]['cleartimestampday'] = clearts[0]
-                renderAlarms[i]['cleartimestamptime'] = clearts[1]
-            }
-        }
-        renderAlarms = sortObjectsArray(renderAlarms, 'ts', {order: 'desc'})
-        renderAlarms = pdfcontroller.chunkArray(renderAlarms , 5)
-        // console.log(renderAlarms)
-
-        for(var blockIndex=0;blockIndex<renderAlarms.length;blockIndex++){
-            var renderAlarmsBlock = renderAlarms[blockIndex]
-
-            for(var index=0;index<renderAlarmsBlock.length;index++){
-                    var alarm = renderAlarmsBlock[index]
-                    var tableContent = `
-                        <tr>
-                        <td style="text-align: center">${alarm.EquipmentID}</td>
-                            <td style="text-align: center"><div>${alarm.timestampday}</div><div>${alarm.timestamptime}</div></td>
-                            <td style="text-align: center"><div>${alarm.cleartimestampday}</div><div>${alarm.cleartimestamptime}</div></td>
-                            <td style="text-align: center">${alarm.timeDifference}</td>
-                            <td style="text-align: center">${alarm.Type}</td>
-                            <td style="text-align: center">${alarm.Status}</td>
-                        </tr>
-                    `
-                    renderAlarms[blockIndex][index] = tableContent
-                    // contentPages.push({table: tableContent,pageNo: blockIndex+1})
-            }
-        }
-
-        for(var blockIndex=0;blockIndex<renderAlarms.length;blockIndex++){
-            var renderAlarmsBlock = renderAlarms[blockIndex]
-            renderAlarmsBlock = renderAlarmsBlock.join('')
-            renderAlarmsBlock = `
-            <table>
-                <tr>
-                <td style="text-align: center">ID</td>
-                    <td style="text-align: center">Alarm ts</td>
-                    <td style="text-align: center">Alarm Clear ts</td>
-                    <td style="text-align: center">SLA</td>
-                    <td style="text-align: center">Alarm Type</td>
-                    <td style="text-align: center">Fault Type</td>
-                </tr>
-                ${renderAlarmsBlock}
-            </table>`
-            renderAlarms[blockIndex] = renderAlarmsBlock
-        }
-
-
-        var style = `
-        <head>
-    <meta charset="utf-8" />
-    <style type="text/css" media="screen,print">
-        .new-page {
-            page-break-before: always;
-        }
-
-        table {
-            font-family: arial, sans-serif;
-            border-collapse: collapse;
-            width: 100%;
-        }
-            
-        td, th {
-        border: 1px solid #dddddd;
-        text-align: left;
-        padding: 8px;
-        }
-        
-        tr:nth-child(even) {
-        background-color: #dddddd;
-        }
-
-        .faultReportTitle{
-            margin-left: '100em'
-        }
-        .alarmTitle{
-            margin-top: 0.5em;
-            font-size: 2em;
-            text-align: center;
-        }
-        .iZee{
-            color:black;
-        }
-        .Sync{
-            color: #ff0100;
-        }
-    </style>
-</head>
-<body>`
-
-        var title = `<h1 class="alarmTitle">
-        <span class='iZee'>iZee<span class='Sync'>Sync</span></span>
-
-        </h1>
-        <div>&nbsp;</div>
-        `
-        var ReportInfo =  `<div class='faultReportTitle'>
-                    <strong>Equipment Fault Report</strong></div>
-                    <div>&nbsp;</div>
-                    <div>
-                        From: ${decryptedData.from}
-                    </div>
-                    <div>
-                        To: ${decryptedData.to}
-                        </div>
-                        <div>Report Generation Date: ${now}</div>
-                        <div>&nbsp;</div>
-                        <div>&nbsp;</div>
-                    <div>
-                    `
-        
-        var contentPages = [style]
-
-        for(var i=0;i<renderAlarms.length;i++){
-            var alarmTable = renderAlarms[i]
-            if(i == 0){
-                contentPages.push(
-                    `
-                    <div>
-                        ${title}
-                        ${ReportInfo}
-                        ${alarmTable}
-                    </div>
-                    `
-                ) 
-            }else{
-                contentPages.push(
-                    `
-                    <div class="new-page">
-                        <div>&nbsp;</div>
-                        ${title}
-                        ${alarmTable}
-                    </div>
-                    `
-                )
-            }
-        }
-        contentPages.push('</body>')
-        var html = contentPages.join("")
-        // encodeURIComponent()
-        // var data = {"from" : "2021-01-25","to" : "2021-01-25"}
-
-        // in charge of generatePDF and Upload
-        var options = { format: 'Letter' };
-
-        var date = moment().format('L');
-        var yymmdd = date.split('/')
-        yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
-        var fileName = `alarmReportPDF_${yymmdd}.pdf`
-        var generatePDF = await pdfcontroller.generatePDF(pdf,html,options,fileName)
-        var file = `${__dirname}/../${fileName}`;
-        res.download(file);
-    })
-
     app.get('/generatexlxs/alarmreport/:data',async(req, res)=>{
         var encrypt = req.params.data
         var encrypytkey = 'somekey'
@@ -405,153 +138,12 @@ const Download = (app) => {
         var file = `${__dirname}/../${filePath}`;
         res.download(file);
     })
-
-    app.get('/generatexlxs/weightReport/:data',async(req, res)=>{
-        var encrypt = req.params.data
-        var encrypytkey = 'somekey'
-        var bytes  = CryptoJS.AES.decrypt(encrypt, encrypytkey);
-        var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-        var isSelectedID = false
-        var isDaterange = false
-        var selectedArr = []
-
-        var tempArr = []
-        var tempArray = []
-        var compactor = new Compactor
-        //marking
-        var compactorReport = await compactor.getEquipmentWeightCollection()
-        let equipments = await compactor.scanEquipmentCurrentStatus()
-
-        for(var index=0;index<equipments.length;index++){
-            var equipment = equipments[index]
-            for(var i=0;i<compactorReport.length;i++){
-                var weightEvent = compactorReport[i]
-                if(weightEvent.EquipmentID == equipment.EquipmentID){
-                    compactorReport[i]["shortAddress"] = equipment.shortAddress
-                }
-
-                compactorReport[i]["currentWeight"] = Math.round(weightEvent.currentWeight)
-                compactorReport[i]["collectedWeight"] = Math.round(parseFloat(weightEvent["Weight-Collected"]) )
-                compactorReport[i]["collectTS"] = weightEvent["collectedWeight-ts"]
-
-                delete(compactorReport[i]["insertID"])
-                delete(compactorReport[i]["latestTS"])
-            }
-        }
-
-        for(var i=0;i<compactorReport.length;i++){
-            delete(compactorReport[i]["collectedWeight-ts"])
-            delete(compactorReport[i]["Weight-Collected"])
-        }
-
-        if(decryptedData.selectedID){
-            isSelectedID = true
-            selectedArr = decryptedData.selectedID
-        }
-
-        if(decryptedData.dateRange){
-            isDaterange = true
-        }
-
-        if(isSelectedID){
-            for(var i=0;i<selectedArr.length;i++){
-                var id = selectedArr[i]
-                for(var index=0;index<compactorReport.length;index++){
-                    var alarm = compactorReport[index]
-                    if(alarm.EquipmentID == id){
-                        tempArr.push(compactorReport[index])
-                    }
-                }
-            }
-            tempArr = sortObjectsArray(tempArr, 'ts', {order: 'desc'})
-            compactorReport = tempArr
-        }
-
-        if(isDaterange){
-            var dateRangeObject = decryptedData.dateRange
-            var startDate = dateRangeObject.starttime
-            var endDate = dateRangeObject.endtime
-            
-            for(var i=0;i<compactorReport.length;i++){
-                var data = compactorReport[i]
-                if(startDate !== '' || endDate !== ''){
-                    if(startDate <= endDate){
-                        if(data.collectTS >= startDate && data.collectTS <= endDate){
-                            tempArray.push(compactorReport[i])
-                        }
-                    }
-                }
-            }
-            compactorReport = tempArray
-        }
-
-        if(isDaterange && isSelectedID){
-            var tempArray = []
-            var tempArr = []
-            var dateRangeObject = decryptedData.dateRange
-            var startDate = dateRangeObject.starttime
-            var endDate = dateRangeObject.endtime
-
-            for(var i=0;i<selectedArr.length;i++){
-                var id = selectedArr[i]
-                for(var index=0;index<compactorReport.length;index++){
-                    var alarm = compactorReport[index]
-                    if(alarm.EquipmentID == id){
-                        tempArr.push(compactorReport[index])
-                    }
-                }
-            }
-
-            for(var i=0;i<tempArr.length;i++){
-                var data = tempArr[i]
-                if(startDate !== '' || endDate !== ''){
-                    if(startDate <= endDate){
-                        if(data.collectTS >= startDate && data.collectTS <= endDate){
-                            tempArray.push(tempArr[i])
-                        }
-                    }
-                }
-            }
-
-            if(tempArray > 0){
-                tempArray = sortObjectsArray(tempArray, 'collectTS', {order: 'desc'})
-            }
-            compactorReport = tempArray
-        }
-
-        compactorReport = sortObjectsArray(compactorReport, 'ts', {order: 'desc'})
-        var exportObj = new Excel
-        const workSheetColumnNames = [
-            "Equipment ID",
-            "Short Address",
-            "Weight Collection Time",
-            "Amount Collected",
-            'Equipment Remaining Weight'
-        ]
-        var workSheetName = 'alarmExcel'
-        var date = moment().format('L');
-        var yymmdd = date.split('/')
-        yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
-        
-        var filePath = `./weightReport_${yymmdd}.xlsx`
-        exportObj.exportDataToExcel(compactorReport, workSheetColumnNames, workSheetName, filePath, 'weight')
-
-        var file = `${__dirname}/../${filePath}`;
-        res.download(file);
-    })
 }
 
 const Login = (app) => {
 
     app.get('/getCurrentUser',async(req, res)=>{
-        var type = 'user'
-        if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
-            type = 'admin'
-        }
-
-        if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
-            type = 'serviceUser'
-        }
+        let auth = new Authetication
 
         var accesstoken = null
 
@@ -568,8 +160,7 @@ const Login = (app) => {
         }
 
         if(accesstoken){
-            var auth = new Authetication;
-            var checktoken = await auth.checkToken(accesstoken, type)
+            var checktoken = await auth.checkToken(accesstoken)
             if(checktoken <= 0){
                 res.json({
                     'success' : false,
@@ -577,12 +168,10 @@ const Login = (app) => {
                 })
             }else{
                 let getUserNameFromToken = auth.getUserNameFromToken(accesstoken)
-                getUserNameFromToken.then((userDetails)=>{
-                    var { username, password } = userDetails
+                getUserNameFromToken.then((username)=>{
                     res.json({
                         'success' : true,
-                        'username' : username,
-                        'password' : password
+                        'username' : username
                     })
                 })
 
@@ -671,96 +260,131 @@ const AlarmRoutes = (app) =>{
 
         //get bar data for alarm tiggered for the month
         //get all the alarm events for all time
-        var alarm = new Alarm
-        var tablesAll = await alarm.readAllTables()
-        tablesAll = tablesAll.TableNames
-        var dateRange = []
-        for(var i=0;i<tablesAll.length;i++){
-            if(tablesAll[i].includes('Alarm_2')){
-                dateRange.push(tablesAll[i])
-            }
-        }
-        var alarmdata = []
-        //get all the data from the date range
-        for(var i=0;i<dateRange.length;i++){
-            var tableName = dateRange[i]
-            var alarm = new Alarm(tableName)
-            var alarmData = await alarm.getAllLiveAlarm()
-            alarmdata.push(alarmData.Items)
-        }
-
-
-        alarmdata = alarmdata.flat()
-        if(req.params.month == 'today'){
-            //markkk
-            //date example 2021-01-07 14:17:28
-            
-            //filter the alarmData to today
-            alarmdata = alarmdata.map((alarm)=>{
-                var date = moment().format('L');
-                var yymmdd = date.split('/')
-                var startTime = `${yymmdd[2]}-${yymmdd[0]}-${yymmdd[1]} 00:00:00`
-                var endTime = `${yymmdd[2]}-${yymmdd[0]}-${yymmdd[1]} 23:59:59`
-                if(startTime <= alarm.ts && endTime >= alarm.ts){
-                    return alarm
-                }
-            })
-
-            alarmdata = alarmdata.filter(Boolean)
-
-            var severeAlarm = ['FireAlarm', 'DischargeGateMotorTrip', 'DischargeScrewMotorTrip']
-
-            alarmdata = severeAlarm.map((sAl)=>{
-                var alarmData = alarmdata.map((alarm)=>{
-                    if(alarm.Type == sAl){
-                        return alarm
-                    }
+        if(req.headers.authorization){
+            var token = req.headers.authorization.split(' ')
+            if(token[0] == 'Bearer'){
+                accesstoken = token[1]
+            }else{
+                res.json({
+                    'success' : false,
+                    'error' : 'Please use bearer token to log in'
                 })
-
-                return alarmData
-            })
-            alarmdata = alarmdata.flat()
+            }
         }
         
-        alarmdata = alarmdata.filter(Boolean)
-
-        var dataObj = {}
-        dataObj['success'] = true
-
-        for(var i=0;i<severeAlarm.length;i++){
-            var sAl = severeAlarm[i]
-            var tempArr = []
-            dataObj[sAl] = 0
-        }
-
-        for(var i=0;i<severeAlarm.length;i++){
-            var sAl = severeAlarm[i]
-            var tempArr = []
-            for(var x=0;x<alarmdata.length;x++){
-                var alarm = alarmdata[x]
-                // obj[sAl] = 0
-                if(alarm.Type == sAl){
-                    tempArr.push(alarm)
-                    dataObj[sAl] = tempArr.length
+        if(accesstoken){
+            let auth = new Authetication
+            let checktoken = await auth.checkToken(accesstoken)
+            if(checktoken <= 0){
+                res.json({
+                    'success' : false,
+                    'error' : 'Invalid token'
+                })
+            }else{
+                var alarm = new Alarm
+                var tablesAll = await alarm.readAllTables()
+                tablesAll = tablesAll.TableNames
+                var dateRange = []
+                for(var i=0;i<tablesAll.length;i++){
+                    if(tablesAll[i].includes('Alarm_2')){
+                        dateRange.push(tablesAll[i])
+                    }
                 }
-            }
-        }
+                var alarmdata = []
+                //get all the data from the date range
+                for(var i=0;i<dateRange.length;i++){
+                    var tableName = dateRange[i]
+                    var alarm = new Alarm(tableName)
+                    var alarmData = await alarm.getAllLiveAlarm()
+                    alarmdata.push(alarmData.Items)
+                }
 
-        res.json(
-            dataObj
-        )
+
+                alarmdata = alarmdata.flat()
+                if(req.params.month == 'today'){
+                    //markkk
+                    //date example 2021-01-07 14:17:28
+                    
+                    //filter the alarmData to today
+                    alarmdata = alarmdata.map((alarm)=>{
+                        var date = moment().format('L');
+                        var yymmdd = date.split('/')
+                        var startTime = `${yymmdd[2]}-${yymmdd[0]}-${yymmdd[1]} 00:00:00`
+                        var endTime = `${yymmdd[2]}-${yymmdd[0]}-${yymmdd[1]} 23:59:59`
+                        if(startTime <= alarm.ts && endTime >= alarm.ts){
+                            return alarm
+                        }
+                    })
+
+                    alarmdata = alarmdata.filter(Boolean)
+
+                    var severeAlarm = ['FireAlarm', 'DischargeGateMotorTrip', 'DischargeScrewMotorTrip']
+
+                    alarmdata = severeAlarm.map((sAl)=>{
+                        var alarmData = alarmdata.map((alarm)=>{
+                            if(alarm.Type == sAl){
+                                return alarm
+                            }
+                        })
+
+                        return alarmData
+                    })
+                    alarmdata = alarmdata.flat()
+                }
+                
+                alarmdata = alarmdata.filter(Boolean)
+
+                var dataObj = {}
+                dataObj['success'] = true
+
+                for(var i=0;i<severeAlarm.length;i++){
+                    var sAl = severeAlarm[i]
+                    var tempArr = []
+                    dataObj[sAl] = 0
+                }
+
+                for(var i=0;i<severeAlarm.length;i++){
+                    var sAl = severeAlarm[i]
+                    var tempArr = []
+                    for(var x=0;x<alarmdata.length;x++){
+                        var alarm = alarmdata[x]
+                        // obj[sAl] = 0
+                        if(alarm.Type == sAl){
+                            tempArr.push(alarm)
+                            dataObj[sAl] = tempArr.length
+                        }
+                    }
+                }
+
+                res.json(
+                    dataObj
+                )
+            }
+        }else{
+            res.json({
+                'success' : false,
+                'error' : 'Please log in first'
+            })
+        }
     })
 
     app.get('/getAlarmReport/all',async(req, res)=>{
-        var type = 'user'
-        if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
-            type = 'admin'
+
+
+        let auth = new Authetication
+        let apikey = await auth.getAPIKeys(req.headers.apikey)
+        
+        // var type = apikey[0]
+        // type = type.type
+
+        if(apikey.length <= 0){
+            res.json({
+                'success' : false,
+                'error' : 'API Keys Incorrect'
+            })
+            return;
         }
 
-        if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
-            type = 'serviceUser'
-        }
-        
         var accesstoken = null
         if(req.headers.authorization){
             var token = req.headers.authorization.split(' ')
@@ -775,7 +399,7 @@ const AlarmRoutes = (app) =>{
         }
         if(accesstoken){
             let auth = new Authetication
-            let checktoken = await auth.checkToken(accesstoken, type)
+            let checktoken = await auth.checkToken(accesstoken)
             if(checktoken <= 0){
                 res.json({
                     'success' : false,
@@ -972,149 +596,6 @@ const AlarmRoutes = (app) =>{
         }
     })
 
-    app.get('/getDetailAlarm',async(req, res)=>{
-        var type = 'user'
-        if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
-            type = 'admin'
-        }
-
-        if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
-            type = 'serviceUser'
-        }
-        
-        var accesstoken = null
-        if(req.headers.authorization){
-            var token = req.headers.authorization.split(' ')
-            if(token[0] == 'Bearer'){
-                accesstoken = token[1]
-            }else{
-                res.json({
-                    'success' : false,
-                    'error' : 'Please use bearer token to log in'
-                })
-            }
-        }
-        if(accesstoken){
-            let auth = new Authetication
-            let checktoken = await auth.checkToken(accesstoken, type)
-            if(checktoken <= 0){
-                res.json({
-                    'success' : false,
-                    'error' : 'Invalid token'
-                })
-            }else{
-                var date = moment().format('L');
-                var yymm = date.split('/')
-                yymm = `${yymm[2]}${yymm[0]}`
-
-                var getAlarmTable = `Alarm_${yymm}`
-
-                var alarm = new Alarm(getAlarmTable)
-                let allAlarm = await alarm.getAllAlarm()
-
-                let compactor = new Compactor
-                allAlarm = allAlarm.Items
-                for(i=0;i<allAlarm.length;i++){
-                    var compactorDetails = await compactor.getCompactorInfo(allAlarm[i].compactorID)
-                    allAlarm[i]['sectionArea'] = compactorDetails.Item.sectionArea
-                }
-        
-                res.json({
-                    'alarmInfo' : allAlarm
-                })
-            }
-        }else{
-            res.json({
-                'success' : false,
-                'error' : 'Please log in first'
-            })
-        }
-    })
-
-    app.get('/getTodaysAlarm/:section',async(req, res)=>{
-        var type = 'user'
-        if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
-            type = 'admin'
-        }
-
-        if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
-            type = 'serviceUser'
-        }
-        var accesstoken = null
-        //ask for 
-        if(req.headers.authorization){
-            var token = req.headers.authorization.split(' ')
-            if(token[0] == 'Bearer'){
-                accesstoken = token[1]
-            }else{
-                res.json({
-                    'success' : false,
-                    'error' : 'Please use bearer token to log in'
-                })
-                accesstoken = null
-            }
-        }
-        if(accesstoken){
-            let auth = new Authetication
-            let checktoken = await auth.checkToken(accesstoken, type)
-            if(checktoken <= 0){
-                res.json({
-                    'success' : false,
-                    'error' : 'Invalid token'
-                })
-            }else{
-                //get AlarmToday's table, we assume alarm raised is in Alarm_thisMonth
-
-                var todayDate = moment().format('L')
-                var yymm = todayDate.split('/')
-                yymm = `${yymm[2]}${yymm[0]}`
-
-                var getAlarmTable = `Alarm_${yymm}`
-
-                var alarm = new Alarm(getAlarmTable)
-                let allAlarm = alarm.getAllAlarm()
-
-                allAlarm.then(async(alarms)=>{
-                    var alarmArr = []
-                    if(alarms.Count > 0){
-                        var allAlarms = alarms.Items
-                        for(i=0;i<allAlarms.length;i++){
-                            if(moment(allAlarms[i].timeStamp).format('L') == todayDate){
-                                let comactorObj = new Compactor
-                                let compactorInfo = await comactorObj.getCompactorInfo(allAlarms[i].compactorID)
-                                if(compactorInfo.Item.sectionArea == req.params.section){
-                                    alarmArr.push(allAlarms[i])
-                                }
-                            }
-                        }
-                        if(alarmArr.length <= 0){
-                            res.json({
-                                'success' : true,
-                                'alarms' : [],
-                                'message' : 'No Alarm Raised'
-                            })
-                        }else{
-                            res.json({
-                                'success' : true,
-                                'alarms' : alarmArr
-                            })
-                        }
-                    }else{
-                        res.json({
-                            'success' : true,
-                            'message' : 'No Alarm Raised'
-                        })
-                    }
-                })
-            }
-        }else{
-            res.json({
-                'success' : false,
-                'error' : 'Please log in first'
-            })
-        }
-    })
-
     app.post('/sendmail',async(req, res)=>{
         const mailgun = require("mailgun-js");
         const DOMAIN = process.env.MAILGUN_DOMAIN;
@@ -1190,330 +671,161 @@ const AlarmRoutes = (app) =>{
     })
 
     app.get('/getEquipmentWeightCollection/live',async(req, res)=>{
-        let compactor = new Compactor
-        let data = compactor.getEquipmentWeightCollection()
-        data.then(async(weightCollection)=>{
-            //markkrrr
-            //get the address here
-            let equipments = await compactor.scanEquipmentCurrentStatus()
-            for(var index=0;index<equipments.length;index++){
-                var equipment = equipments[index]
-                for(var i=0;i<weightCollection.length;i++){
-                    var weightEvent = weightCollection[i]
-                    if(weightEvent.EquipmentID == equipment.EquipmentID){
-                        weightCollection[i]["shortAddress"] = equipment.shortAddress
-                    }
-
-                    weightCollection[i]["currentWeight"] = Math.round(weightEvent.currentWeight)
-                    weightCollection[i]["collectedWeight"] = Math.round(parseFloat(weightEvent["Weight-Collected"]) )
-                    weightCollection[i]["collectTS"] = weightEvent["collectedWeight-ts"]
-
-                    delete(weightCollection[i]["insertID"])
-                    delete(weightCollection[i]["latestTS"])
-                }
-            }
-            for(var i=0;i<weightCollection.length;i++){
-                delete(weightCollection[i]["collectedWeight-ts"])
-                delete(weightCollection[i]["Weight-Collected"])
-            }
-
-            weightCollection = sortObjectsArray(weightCollection, 'EquipmentID');
-
-            res.json({
-                weightCollection : weightCollection
-            })
-        })
-    })
-
-    app.get('/getTodaysAlarms/live',async(req, res)=>{
-        var todayDate = moment().format('L')
-        var yymm = todayDate.split('/')
-        yymm = `${yymm[2]}${yymm[0]}`
-
-        var getAlarmTable = `Alarm_${yymm}`
-
-        var alarm = new Alarm(getAlarmTable)
-        let allAlarm = await alarm.getAllLiveAlarm()
+        let auth = new Authetication
+        let apikey = await auth.getAPIKeys(req.headers.apikey)
         
-        var todaysDate = new Date().toISOString().split('T')[0]
-        let alarmData = []
-        allAlarm = allAlarm.Items
-        for(var i =0;i<allAlarm.length;i++){
-            var date = allAlarm[i].ts.split(' ')
-            date = date[0]
-            if(date == todaysDate){
-                allAlarm[i]['sectionArea'] = 'CBM'
-                alarmData.push(allAlarm[i])
-            }
+        // var type = apikey[0]
+        // type = type.type
+
+        if(apikey.length <= 0){
+            res.json({
+                'success' : false,
+                'error' : 'API Keys Incorrect'
+            })
+            return;
         }
 
-        res.json({
-            'success' : true,
-            'alarms' : alarmData
-        })
-    })
-
-    app.get('/getAllAlarms/live', async(req,res)=>{
-        let dateObj = moment().format('L');
-        var yymm = dateObj.split('/')
-        yymm = `${yymm[2]}${yymm[0]}`
-        var dynamicAlarmTable = `Alarm_${yymm}`
-
-        var alarm = new Alarm(dynamicAlarmTable)
-        var allAlarmInfo = alarm.getAllLiveAlarm()
-        allAlarmInfo.then((result)=>{
-            res.json({'alarmInfo' : result.Items})
-        }).catch((err)=>{
-            res.json({'error' : err})
-        })
-    })
-
-    app.get('/AlarmCurrentStatus/live', async(req, res)=>{
-        
-        let compactor = new Compactor
-            let equipments = await compactor.scanEquipmentCurrentStatus()
-            //highly unlikely but still place condition
-            if(equipments.length <= 0){
-                res.json({'success' : false, 'error' : 'No Data'})
+        if(req.headers.authorization){
+            var token = req.headers.authorization.split(' ')
+            if(token[0] == 'Bearer'){
+                accesstoken = token[1]
             }else{
-                let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeGateMotorTrip, DischargeScrewMotorTrip, BinLifterMotorTrip, MotorTrip, Section, coordinates, shortAddress, address}) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeGateMotorTrip, DischargeScrewMotorTrip, BinLifterMotorTrip, MotorTrip, Section, coordinates , shortAddress, address}));
-                var alarmTypes = ['EStop','FireAlarm','GateNotClose','WeightExceedLimit','TransferScrewMotorTrip','WeightExceedLimit','DischargeScrewMotorTrip','DischargeGateMotorTrip','BinLifterMotorTrip', 'MotorTrip']
-                resultArr = []
-                for(var i=0;i<alarmTypes.length;i++){
-                    var alarmType = alarmTypes[i]
-                    for(var x=0;x<result.length;x++){
-                        var object = {}
-                        if( !(!result[x][alarmType] || result[x][alarmType] == {} ) ){
-                            var id = result[x]['EquipmentID']
-                            object["ts"] = result[x][alarmType]['ts']
-                            object["CurrentStatus"] = result[x][alarmType]['CurrentStatus']
-                            object["shortAddress"] = result[x]['shortAddress']
-                            // if(id.includes('DS')){
-                            //     object["EquipmentType"] = 'DS'
-                            // }else{
-                            //     object["EquipmentType"] = 'MM'
-                            // }
-                            object["EquipmentID"] = id
-                            object["Type"] = alarmType
-                            object["Section"] = result[x]['Section']
-                            resultArr.push(object)
-                        }
-                    }
-                }
-
-                resultArr = compactor.removeDuplicates(resultArr, 'ts')
-                resultArr = sortObjectsArray(resultArr, 'ts', {order: 'desc'});
                 res.json({
-                    'success' : true,
-                    'alarms' : resultArr
+                    'success' : false,
+                    'error' : 'Please use bearer token to log in'
                 })
             }
+        }
+        
+        if(accesstoken){
+            let checktoken = await auth.checkToken(accesstoken)
+            if(checktoken <= 0){
+                res.json({
+                    'success' : false,
+                    'error' : 'Invalid token'
+                })
+            }else{
+                let compactor = new Compactor
+                let data = compactor.getEquipmentWeightCollection()
+                data.then(async(weightCollection)=>{
+                    //markkrrr
+                    //get the address here
+                    let equipments = await compactor.scanEquipmentCurrentStatus()
+                    for(var index=0;index<equipments.length;index++){
+                        var equipment = equipments[index]
+                        for(var i=0;i<weightCollection.length;i++){
+                            var weightEvent = weightCollection[i]
+                            if(weightEvent.EquipmentID == equipment.EquipmentID){
+                                weightCollection[i]["shortAddress"] = equipment.shortAddress
+                            }
+
+                            weightCollection[i]["currentWeight"] = Math.round(weightEvent.currentWeight)
+                            weightCollection[i]["collectedWeight"] = Math.round(parseFloat(weightEvent["Weight-Collected"]) )
+                            weightCollection[i]["collectTS"] = weightEvent["collectedWeight-ts"]
+
+                            delete(weightCollection[i]["insertID"])
+                            delete(weightCollection[i]["latestTS"])
+                        }
+                    }
+                    for(var i=0;i<weightCollection.length;i++){
+                        delete(weightCollection[i]["collectedWeight-ts"])
+                        delete(weightCollection[i]["Weight-Collected"])
+                    }
+
+                    weightCollection = sortObjectsArray(weightCollection, 'EquipmentID');
+
+                    res.json({
+                        weightCollection : weightCollection
+                    })
+                })
+            }
+        }else{
+            res.json({
+                'success' : false,
+                'error' : 'Please log in first'
+            })
+        }
+    })
+
+    app.get('/alarmCurrentStatus/live', async(req, res)=>{
+        
+        var accesstoken = null
+        if(req.headers.authorization){
+            var token = req.headers.authorization.split(' ')
+            if(token[0] == 'Bearer'){
+                accesstoken = token[1]
+            }else{
+                res.json({
+                    'success' : false,
+                    'error' : 'Please use bearer token to log in'
+                })
+            }
+        }
+        if(accesstoken){
+            let auth = new Authetication
+            let checktoken = await auth.checkToken(accesstoken)
+            if(checktoken <= 0){
+                res.json({
+                    'success' : false,
+                    'error' : 'Invalid token'
+                })
+            }else{
+                let compactor = new Compactor
+                let equipments = await compactor.scanEquipmentCurrentStatus()
+                //highly unlikely but still place condition
+                if(equipments.length <= 0){
+                    res.json({'success' : false, 'error' : 'No Data'})
+                }else{
+                    let result = equipments.map(({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeGateMotorTrip, DischargeScrewMotorTrip, BinLifterMotorTrip, MotorTrip, Section, coordinates, shortAddress, address}) => ({ EStop, FireAlarm, GateNotClose, TransferScrewMotorTrip, WeightExceedLimit, EquipmentID, DischargeGateMotorTrip, DischargeScrewMotorTrip, BinLifterMotorTrip, MotorTrip, Section, coordinates , shortAddress, address}));
+                    var alarmTypes = ['EStop','FireAlarm','GateNotClose','WeightExceedLimit','TransferScrewMotorTrip','WeightExceedLimit','DischargeScrewMotorTrip','DischargeGateMotorTrip','BinLifterMotorTrip', 'MotorTrip']
+                    resultArr = []
+                    for(var i=0;i<alarmTypes.length;i++){
+                        var alarmType = alarmTypes[i]
+                        for(var x=0;x<result.length;x++){
+                            var object = {}
+                            if( !(!result[x][alarmType] || result[x][alarmType] == {} ) ){
+                                var id = result[x]['EquipmentID']
+                                object["ts"] = result[x][alarmType]['ts']
+                                object["CurrentStatus"] = result[x][alarmType]['CurrentStatus']
+                                object["shortAddress"] = result[x]['shortAddress']
+                                // if(id.includes('DS')){
+                                //     object["EquipmentType"] = 'DS'
+                                // }else{
+                                //     object["EquipmentType"] = 'MM'
+                                // }
+                                object["EquipmentID"] = id
+                                object["Type"] = alarmType
+                                object["Section"] = result[x]['Section']
+                                resultArr.push(object)
+                            }
+                        }
+                    }
+
+                    resultArr = compactor.removeDuplicates(resultArr, 'ts')
+                    resultArr = sortObjectsArray(resultArr, 'ts', {order: 'desc'});
+                    res.json({
+                        'success' : true,
+                        'alarms' : resultArr
+                    })
+                }
+            }
+        }else{
+            res.json({
+                'success' : false,
+                'error' : 'Please log in first'
+            })
+        }
     })
 }
 
 const CompactorRoutes = (app) =>{
-    app.post('/weightCollectionData',async(req, res)=>{
-        var compactor = new Compactor
-        var saveWeightCollected = compactor.saveWeightCollected()
-        saveWeightCollected.then((result)=>{
-            res.json(result)
-        })
-    })
-    //can be done by admin
-    app.post('/editCompactor',async(req,res)=>{
-        //only done by admin
-        var type = 'user'
-        if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
-            type = 'admin'
-        }
-    
-        if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
-            type = 'serviceUser'
-        }
-        if(type == 'user' || type == 'serviceUser'){
-            res.json({
-                'success' : false,
-                'error' : `${type} Cannot Perform This Action`
-            })
-        }
-
-        if(req.headers.authorization){
-            //scan thru accesscontroltable
-            var token = req.headers.authorization.split(' ')
-            if(token[0] == 'Bearer'){
-                accesstoken = token[1]
-            }else{
-                res.json({
-                    'success' : false,
-                    'error' : 'Please use bearer token to log in'
-                })
-                accesstoken = null
-            }
-            if(accesstoken){
-                let auth = new Authetication
-                let checktoken = await auth.checkToken(accesstoken, type)
-                if(checktoken <= 0){
-                    res.json({
-                        'success' : false,
-                        'error' : 'Invalid token'
-                    })
-                }else{
-                    let compactor = new Compactor
-                    var compactorDetails = {
-                        "address" : req.body.address,
-                        "compactorType" : req.body.compactorType,
-                        "sectionArea" : req.body.sectionArea
-                    }
-                        compactor.editCompactor(req.body.compactorID,compactorDetails)
-                        res.json({'success' : true})
-                    }
-                }
-            }else{
-                res.json({
-                    'success' : false,
-                    'error' : 'Please log in first'
-                })
-            }
-        })        
-    //login using normal user
-    app.get('/getCompactorInfo/:compactorID', async(req, res)=>{
-        //user and admin can access
-        var type = 'user'
-        if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
-            type = 'admin'
-        }
-    
-        if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
-            type = 'serviceUser'
-        }
-
-        if(type == 'serviceUser'){
-            res.json({
-                'success' : false,
-                'error' : `${type} Cannot Perform This Action`
-            })
-        }
-
-        if(req.headers.authorization){
-            var token = req.headers.authorization.split(' ')
-            if(token[0] == 'Bearer'){
-                accesstoken = token[1]
-            }else{
-                res.json({
-                    'success' : false,
-                    'error' : 'Please use bearer token to log in'
-                })
-                accesstoken = null
-            }
-
-            if(accesstoken){
-                let auth = new Authetication
-                let checktoken = await auth.checkToken(accesstoken, type)
-                if(checktoken <= 0){
-                    res.json({
-                        'success' : false,
-                        'error' : 'Invalid token'
-                    })
-                }else{
-                    //if dont have throw error
-                    var compactorID = req.params.compactorID
-                    let compactor = new Compactor
-                    var compactorInfo = compactor.getCompactorInfo(compactorID)
-                    compactorInfo.then((result)=>{
-                        res.json({'compactorInfo' : result.Item})
-                    })
-                }
-            } 
-        }else{
-            res.json({
-                'success' : false,
-                'error' : 'Please log in first'
-            })
-        } 
-    })
-
-    app.get('/allCompactorInfo/:section', async(req, res)=>{
-        var type = 'user'
-        if(req.headers.apikey == 'jnjirej9reinvuiriuerhuinui'){
-            type = 'admin'
-        }
-
-        if(req.headers.apikey == 'juit959fjji44jcion4moij0kc'){
-            type = 'serviceUser'
-        }
-        if(type == 'serviceUser'){
-            res.json({
-                'success' : false,
-                'error' : `${type} Cannot Perform This Action`
-            })
-        }
-
-        if(req.headers.authorization){
-            var token = req.headers.authorization.split(' ')
-            if(token[0] == 'Bearer'){
-                accesstoken = token[1]
-            }else{
-                res.json({
-                    'success' : false,
-                    'error' : 'Please use bearer token to log in'
-                })
-                accesstoken = null
-            }
-            if(accesstoken){
-                let auth = new Authetication
-                let checktoken = await auth.checkToken(accesstoken, type)
-               
-                if(checktoken <= 0){
-                    res.json({
-                        'success' : false,
-                        'error' : 'Invalid token'
-                    })
-                }
-                else{
-                    let compactor = new Compactor
-                    var allCompactInfo = compactor.scanAllCompactor()
-                    
-                    allCompactInfo.then((result)=>{
-                         let compactors = result.Items
-                         var compactorResult = []
-                         for(i=0;i<compactors.length;i++){
-                             if(compactors[i].sectionArea == req.params.section){
-                                 compactorResult.push(compactors[i])  
-                             }
-                         }
-                    
-                         if(compactorResult.length <= 0){
-                             res.json(
-                                 {
-                                     'compactorResult' : [],
-                                     'message' : 'No compactors in this section'
-                                 }
-                             )
-                         }else{
-                             res.json({'compactorInfo' : compactorResult})
-                         }
-                    }).catch((err)=>{
-                        console.log(err)
-                    })
-                }
-            } 
-        }else{
-            res.json({
-                'success' : false,
-                'error' : 'Please log in first'
-            })
-        }
-    })
-
-    app.get('/allCompactorAddresses/live', async(req, res)=>{
-        let compactor = new Compactor()
-        var allCompactorAddresses = compactor.scanAllLiveCoordinates()
-        allCompactorAddresses.then((result)=>{
-            res.json({'compactorAddresses' : result})
-        }).catch((err)=>{
-            console.log(err)
-        })
-    })
+    // app.post('/weightCollectionData',async(req, res)=>{
+    //     var compactor = new Compactor
+    //     var saveWeightCollected = compactor.saveWeightCollected()
+    //     saveWeightCollected.then((result)=>{
+    //         res.json(result)
+    //     })
+    // })
 
     app.get('/Alarms/esri',async(req, res)=>{
         const sortObjectsArray = require('sort-objects-array');
@@ -1601,53 +913,81 @@ const CompactorRoutes = (app) =>{
     })
 
     app.get('/CompactorCurrentStatus/live', async(req, res)=>{
-        const sortObjectsArray = require('sort-objects-array');
-        let compactor = new Compactor
-        let equipments = await compactor.scanEquipmentCurrentStatus()
-        //highly unlikely but still place condition
-        if(equipments.length <= 0){
-            res.json({'success' : false, 'error' : 'No Data'})
-        }else{
-            let result = equipments.map(({ WeightInformation, EquipmentID, Section, coordinates , address, shortAddress }) => ({WeightInformation, EquipmentID, Section, coordinates, address, shortAddress}));
-            for(var i=0;i<result.length;i++){
-                result[i]['FilledLevel'] = result[i]['WeightInformation']['FilledLevel']
-                result[i]['WeightValue'] = result[i]['WeightInformation']['WeightValue']
-                result[i]['ts'] = result[i]['WeightInformation']['ts'] 
-                result[i]['ts'] = result[i]['WeightInformation']['ts'] 
-            
-                if(result[i]['WeightInformation']['FilledLevel'] < 0){
-                    result[i]['FilledLevel'] = "0"
-                    result[i]['WeightValue'] = "0"
-                }
+        var accesstoken = null
 
-                if(result[i]['WeightInformation']['WeightValue'] < 0){
-                    result[i]['FilledLevel'] = "0"
-                    result[i]['WeightValue'] = "0"
-                }
-
-                if(!result[i]['WeightInformation']['ts']){
-                    result[i]['FilledLevel'] = "0"
-                    result[i]['WeightValue'] = "0"
-                    result[i]['ts'] = ""
-                }
-
-                // if(id.includes('DS')){
-                //     result[i]['EquipmentType'] = 'DS'
-                // }else{
-                //     result[i]['EquipmentType'] = 'MM'
-                // }
-                delete result[i]['WeightInformation']
+        if(req.headers.authorization){
+            var token = req.headers.authorization.split(' ')
+            if(token[0] == 'Bearer'){
+                accesstoken = token[1]
+            }else{
+                res.json({
+                    'success' : false,
+                    'error' : 'Please use bearer token to log in'
+                })
             }
+        }
+        
+        if(accesstoken){
+            let auth = new Authetication
+            let checktoken = await auth.checkToken(accesstoken)
+            if(checktoken <= 0){
+                res.json({
+                    'success' : false,
+                    'error' : 'Invalid token'
+                })
+            }else{
+                let compactor = new Compactor
+                let equipments = await compactor.scanEquipmentCurrentStatus()
+                //highly unlikely but still place condition
+                if(equipments.length <= 0){
+                    res.json({'success' : false, 'error' : 'No Data'})
+                }else{
+                    let result = equipments.map(({ WeightInformation, EquipmentID, Section, coordinates , address, shortAddress }) => ({WeightInformation, EquipmentID, Section, coordinates, address, shortAddress}));
+                    for(var i=0;i<result.length;i++){
+                        result[i]['FilledLevel'] = result[i]['WeightInformation']['FilledLevel']
+                        result[i]['WeightValue'] = result[i]['WeightInformation']['WeightValue']
+                        result[i]['ts'] = result[i]['WeightInformation']['ts'] 
+                        result[i]['ts'] = result[i]['WeightInformation']['ts'] 
+                    
+                        if(result[i]['WeightInformation']['FilledLevel'] < 0){
+                            result[i]['FilledLevel'] = "0"
+                            result[i]['WeightValue'] = "0"
+                        }
 
-            result = sortObjectsArray(result, 'EquipmentID')
+                        if(result[i]['WeightInformation']['WeightValue'] < 0){
+                            result[i]['FilledLevel'] = "0"
+                            result[i]['WeightValue'] = "0"
+                        }
+
+                        if(!result[i]['WeightInformation']['ts']){
+                            result[i]['FilledLevel'] = "0"
+                            result[i]['WeightValue'] = "0"
+                            result[i]['ts'] = ""
+                        }
+
+                        // if(id.includes('DS')){
+                        //     result[i]['EquipmentType'] = 'DS'
+                        // }else{
+                        //     result[i]['EquipmentType'] = 'MM'
+                        // }
+                        delete result[i]['WeightInformation']
+                    }
+
+                    result = sortObjectsArray(result, 'EquipmentID')
+                    res.json({
+                        'success' : true,
+                        'compactorInfo' : result
+                    })
+                }
+            }
+        }else{
             res.json({
-                'success' : true,
-                'compactorInfo' : result
+                'success' : false,
+                'error' : 'Please log in first'
             })
         }
     })
 }
-
 
 module.exports = { 
     "CompactorRoutes": CompactorRoutes,

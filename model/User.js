@@ -68,45 +68,6 @@ class User{
         });
     }
 
-    getCurrentUser(userid, type){
-        var livedocClient = this.livedocClient
-        var idField = ''
-        if(type == 'user'){
-            var table = this.userTable
-            idField = 'userid'
-        }
-
-        if(type == 'serviceUser'){
-            var table = this.engineerTable
-            idField = 'serviceUserID'
-        }
-
-        if(type == 'admin'){
-            var table = this.adminTable
-            idField = 'adminUserID'
-        }
-        var params = {
-            TableName: table,
-            Key:{
-            }
-        };
-
-        params['Key'][idField] = userid
-        return new Promise((resolve, reject)=>{
-            livedocClient.get(params, (err, data)=> {
-                if (err) {
-                    reject("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
-                } else {
-                    let password = data.Item.password
-                    let bytes = this.decryptPassword(password)
-                    var decryptedPW = JSON.parse(bytes.toString(CryptoJS.enc.Utf8))
-                    var userDetails = {username: data.Item.username, password: decryptedPW}
-                    resolve(userDetails);
-                }
-            });
-        })
-    }
-
     async getListofTokens(){
         //tokenmark
         var livedocClient = this.livedocClient
@@ -157,32 +118,6 @@ class User{
                  }
             })
         });
-    }
-
-    getUserIDFromToken(token){
-        var docClient = this.docClient
-        var params = {
-            TableName : this.accesscontroltable,
-            ProjectionExpression: "#token, userid, adminUserID, serviceUserID",
-            FilterExpression: "#token=:token",
-            ExpressionAttributeNames: {
-                "#token": "token",
-            },
-            ExpressionAttributeValues: {
-                 ":token": token
-            }
-        };
-        return new Promise((resolve, reject)=>{
-            docClient.scan(params, (err, data)=>{
-                if (err) {
-                    reject("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
-                } else {
-                    console.log(data)
-                    var dataItem = data.Items[0].serviceUserID || data.Items[0].adminUserID || data.Items[0].userid
-                    resolve(dataItem)
-                }
-            }) 
-        })
     }
 
     getlastid(){
