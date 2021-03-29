@@ -185,18 +185,7 @@ class User{
         })
     }
 
-    getlastid(type){
-        if(type == 'user'){
-            var table = this.userTable
-        }
-
-        if(type == 'serviceUser'){
-            var table = this.engineerTable
-        }
-
-        if(type == 'admin'){
-            var table = this.adminTable
-        }
+    getlastid(){
 
         var tableName = this.lastIDtable
         //marka
@@ -204,7 +193,7 @@ class User{
         var params = {
             TableName: tableName,
             Key:{
-                "table" : table
+                "table" : 'users'
             }
         };
         return new Promise((resolve,reject)=>{
@@ -218,27 +207,18 @@ class User{
         }) 
     }
 
-    updateLastId(lastid, type){
-        var nextid = lastid + 1
+    updateLastId(lastid){
+
+        var nextid = parseInt(lastid) + 1
+        nextid = nextid.toString()
         var tableName = this.lastIDtable
-        if(type == 'user'){
-            var table = this.userTable
-        }
-
-        if(type == 'serviceUser'){ 
-            var table = this.engineerTable
-        }
-
-        if(type == 'admin'){
-            var table = this.adminTable
-        }
 
         var livedocClient = this.livedocClient
 
         var params = {
             TableName:tableName,
             Key:{
-                "table": table
+                "table": 'users'
             },
             UpdateExpression: "set lastid = :lastid",
             ExpressionAttributeValues:{
@@ -255,19 +235,20 @@ class User{
         });
     }
 
-    checkUserExists(username, tableName, idField){
+    checkUserExists(username){
         //if error return false
         //if result return true
 
         var dynamoClient = this.livedocClient
         var params = {
-            TableName: tableName, // give it your table name 
-            ProjectionExpression: "#uname, #password, #uid",
+            TableName: 'users', // give it your table name 
+            ProjectionExpression: "#uname, #password, #userType, #id",
             FilterExpression: "#uname = :username",
             ExpressionAttributeNames: {
                 "#uname": "username",
                 "#password": "password",
-                '#uid': idField
+                "#userType": "userType",
+                "#id": "id",
             },
             ExpressionAttributeValues: {
                 ":username": username
@@ -310,18 +291,20 @@ class User{
     }
 
     async saveNewUser(username, password, type){
-        //get last id from another table
-        var getdynamicTable = this.getdynamicTable(type)
-        var { tableName, userid } = getdynamicTable
-        let checkUser = await this.checkUserExists(username, tableName, userid)
+        
+        var tableName = 'users'
+        let checkUser = await this.checkUserExists(username)
         if(checkUser.Count <= 0){
-            let getlast = await this.getlastid(type)
+            let getlast = await this.getlastid()
             let encryptedPW = this.encryptPassword(password)
             let item = {
                 "username" : username,
                 "password" : encryptedPW
             }
-            item[userid] = getlast.Item.lastid
+            var currentID = getlast.Item.lastid
+            currentID = currentID.toString()
+            item['id'] = currentID
+            item['userType'] = type
             //create a record in user table
             var livedocClient = this.livedocClient
             var params = {
@@ -376,5 +359,10 @@ class User{
         return decryptedPW
     }
 }
+
+var user = new User
+var bytes = user.decryptPassword("U2FsdGVkX18Gh1zpSxw3qEoa3OWU5tMeYjbBgW9eOX4=")
+var decryptedPW = JSON.parse(bytes.toString(CryptoJS.enc.Utf8))
+console.log(decryptedPW)
 
 module.exports = User

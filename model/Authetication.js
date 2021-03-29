@@ -98,16 +98,15 @@ class Authetication{
         });
     }
 
-    insertAccessControlToken(userid, token, idField){
+    insertAccessControlToken(userid, token){
         var tableName = this.accesscontroltable
         var livedocClient = this.livedocClient
 
         let item = {
             "valid" : true,
-            "token" : token
+            "token" : token,
+            "userid" : userid
         }
-
-        item[idField] = userid
 
         var params = {
             TableName:tableName,
@@ -166,12 +165,10 @@ class Authetication{
         });
     }
 
-    async autheticate(username, password, type){
+    async autheticate(username, password){
         let user = new User
         return new Promise((resolve, reject)=>{
-            let dynamicTable = user.getdynamicTable(type)
-            var { tableName, userid } = dynamicTable
-            user.checkUserExists(username, tableName, userid).then(async(result)=>{
+            user.checkUserExists(username).then(async(result)=>{
                 // console.log(result)
                 if(result.Count > 0){
                     var bytes  = CryptoJS.AES.decrypt(result.Items[0].password, this.encrypytkey);
@@ -180,7 +177,8 @@ class Authetication{
                         var token = this.signToken(username, password)
                         let userDetails = result.Items[0]
             //             //save token in accesscontrol table
-                        this.insertAccessControlToken(userDetails[userid], token, userid)
+                        var userid = userDetails.id
+                        this.insertAccessControlToken(userid, token)
                             resolve(
                                 {
                                     "success" : true,
@@ -209,5 +207,7 @@ class Authetication{
         })
     }
 }
+
+
 
 module.exports = Authetication

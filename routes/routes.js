@@ -624,10 +624,9 @@ const Login = (app) => {
     app.post('/loginUser',(req, res)=>{
         if(req.body.username && req.body.password){
             let auth = new Authetication
-            let type = req.body.type
             let username = req.body.username
             let password = req.body.password
-            auth.autheticate(username, password, type).then((result)=>{
+            auth.autheticate(username, password).then((result)=>{
                 console.log(result)
                 res.json(result)
             }).catch((err)=>{
