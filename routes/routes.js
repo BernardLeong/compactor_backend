@@ -578,6 +578,8 @@ const AlarmRoutes = (app) =>{
                     alarmdata.push(alarmData.Items)
                 }
 
+                console.log(alarmdata)
+
                 alarmdata = alarmdata.flat()
                 var alarmdataCopy = []
                 for(var i=0;i<alarmdata.length;i++){
