@@ -88,7 +88,11 @@ class Authetication{
                     var userid = data.Items[0]
                     userid = userid.userid
                     let username = await this.getUserNameFromID(userid)
-                    resolve(username)
+                    var uDetails = {
+                        userid: userid,
+                        username : username
+                    }
+                    resolve(uDetails)
                 }
             })
         });

@@ -320,10 +320,11 @@ const Login = (app) => {
                 })
             }else{
                 let getUserNameFromToken = auth.getUserNameFromToken(accesstoken)
-                getUserNameFromToken.then((username)=>{
+                getUserNameFromToken.then((uDetails)=>{
                     res.json({
                         'success' : true,
-                        'username' : username
+                        'username' : uDetails.username,
+                        'userid' : uDetails.userid
                     })
                 })
 
@@ -521,8 +522,6 @@ const AlarmRoutes = (app) =>{
     })
 
     app.get('/getAlarmReport/all',async(req, res)=>{
-
-
         let auth = new Authetication
         let apikey = await auth.getAPIKeys(req.headers.apikey)
         
