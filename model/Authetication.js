@@ -56,6 +56,44 @@ class Authetication{
         );
         return token
     }
+
+    async getUserNameFromToken(token){
+        var tableName = this.accesscontroltable
+        var livedocClient = this.livedocClient
+
+        var params = {
+            TableName: tableName,
+            Key:{
+                "token" : token
+            }
+        };
+        var params = {
+            TableName: tableName, // give it your table name 
+            ProjectionExpression: "#token, #userid",
+            FilterExpression: "#token = :token",
+            ExpressionAttributeNames: {
+                "#userid": "userid",
+                "#token": "token",
+            },
+            ExpressionAttributeValues: {
+                ":token": token
+            }
+        };
+    
+        return new Promise((resolve, reject)=>{
+            livedocClient.scan(params, async(err, data)=> {
+                if (err) {
+                    reject(err)
+                } else {
+                    var userid = data.Items[0]
+                    userid = userid.userid
+                    let username = await this.getUserNameFromID(userid)
+                    resolve(username)
+                }
+            })
+        });
+    }
+
     async getUserNameFromID(userid){
         var tableName = this.userTable
         var livedocClient = this.livedocClient
