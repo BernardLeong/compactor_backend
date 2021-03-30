@@ -182,16 +182,24 @@ const Login = (app) => {
             }else{
                 if(type == "adminUser"){
                     //edit a user 
-                    let username = req.body.username
-                    let password = req.body.password
-                    let userType = req.body.userType
+                    //get current udetails 
+
                     let userid = req.body.userid
+                    let currentUDetails = await user.getUserDetails(userid)
+                    currentUDetails = currentUDetails.Item
+                    console.log(currentUDetails)
+
+                    let username = req.body.username || currentUDetails.username
+                    let password = req.body.password
+                    let userType = req.body.userType || currentUDetails.userType
 
                     let uDetail = {
                         username : username,
                         password : password,
                         userType : userType
                     }
+
+                    console.log(uDetail)
                         //edit user and password
                     let editUser = await user.editUser(userid, uDetail)
                     res.json({

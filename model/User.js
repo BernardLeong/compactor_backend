@@ -25,47 +25,25 @@ class User{
         this.accesscontroltable = 'accesscontroltable'
     }
 
-    editUserDetails(userid, type, userDetails){
-        var docClient = this.docClient
-        var idField = ''
-        if(type == 'user'){
-            var table = this.userTable
-            idField = 'userid'
-        }
-
-        if(type == 'serviceUser'){
-            var table = this.engineerTable
-            idField = 'serviceUserID'
-        }
-
-        if(type == 'admin'){
-            var table = this.adminTable
-            idField = 'adminUserID'
-        }
-
-        var { username, password } = userDetails
-
-        var encryptedPW = this.encryptPassword(password)
+    getUserDetails(userid){
+        var tableName = 'users'
+        //marka
+        var livedocClient = this.livedocClient
         var params = {
-            TableName:table,
+            TableName: tableName,
             Key:{
-            },
-            UpdateExpression: "set username = :username, password = :password",
-            ExpressionAttributeValues:{
-                ":username":username,
-                ":password":encryptedPW,
-            },
-            ReturnValues:"UPDATED_NEW"
-        };
-
-        params['Key'][idField] = userid
-        docClient.update(params, (err, data)=>{
-            if (err) {
-                console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
-            } else {
-                console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
+                "id" : userid
             }
-        });
+        };
+        return new Promise((resolve,reject)=>{
+            livedocClient.get(params, (err, data)=>{
+                if (err) {
+                    reject("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+                } else {
+                    resolve(data)
+                }
+            });
+        }) 
     }
 
     async getListofTokens(){
