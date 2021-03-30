@@ -4,7 +4,7 @@ const path = require('path')
 class Excel{
     constructor(){
     }
-    exportExcel = (data, workSheetColumnNames, workSheetName, filePath) => {
+    exportExcel(data, workSheetColumnNames, workSheetName, filePath){
         const workBook = xlsx.utils.book_new()
         const workSheetData = [
             workSheetColumnNames,
@@ -15,7 +15,7 @@ class Excel{
         xlsx.writeFile(workBook, path.resolve(filePath))
     } 
 
-    exportDataToExcel = (eventData, workSheetColumnNames, workSheetName, filePath, exportType='alarm') =>{
+    exportDataToExcel(eventData, workSheetColumnNames, workSheetName, filePath, exportType='alarm'){
 
         var data = eventData.map(evntData => {
             return [evntData.ClearedTS, evntData.ts, evntData.Status, evntData.Type, evntData.EquipmentID, evntData.timeDifference]
