@@ -578,9 +578,15 @@ const AlarmRoutes = (app) =>{
                     alarmdata.push(alarmData.Items)
                 }
 
-                console.log(alarmdata)
+                Object.defineProperty(Array.prototype, 'flatten', {
+                    value: function(depth = 1) {
+                      return this.reduce(function (flat, toFlatten) {
+                        return flat.concat((Array.isArray(toFlatten) && (depth>1)) ? toFlatten.flat(depth-1) : toFlatten);
+                      }, []);
+                    }
+                });
 
-                alarmdata = alarmdata.flat()
+                alarmdata = alarmdata.flatten()
                 var alarmdataCopy = []
                 for(var i=0;i<alarmdata.length;i++){
                     if(typeof alarmdata[i] !== 'undefined' && alarmdata[i].Status == 'Cleared' && alarmdata[i].ClearedTS){
