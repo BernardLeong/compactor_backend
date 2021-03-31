@@ -25,6 +25,11 @@ class User{
         this.accesscontroltable = 'accesscontroltable'
     }
 
+    addNewUser(uDetail){
+        var { username, password, userType} = uDetail
+        
+    }
+
     getUserDetails(userid){
         var tableName = 'users'
         //marka
