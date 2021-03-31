@@ -25,9 +25,24 @@ class User{
         this.accesscontroltable = 'accesscontroltable'
     }
 
-    addNewUser(uDetail){
-        var { username, password, userType} = uDetail
+    async deleteUser(userid){
+        var livedocClient = this.livedocClient
+        var params = {
+            TableName:'users',
+            Key:{
+                "id": userid,
+            },
+        };
         
+        return new Promise((resolve, reject)=>{
+            livedocClient.delete(params, (err, data)=> {
+                if (err) {
+                    resolve(err);
+                } else {
+                    resolve(data);
+                }
+            });
+        })
     }
 
     getUserDetails(userid){

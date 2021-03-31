@@ -224,6 +224,76 @@ const Login = (app) => {
         }
     })
 
+    app.post('/deleteUser',async(req, res)=>{
+        let auth = new Authetication
+        let user = new User
+        
+        let apikey = await auth.getAPIKeys(req.headers.apikey)
+        
+        if(apikey.length <= 0){
+            res.json({
+                'success' : false,
+                'error' : 'API Keys Incorrect'
+            })
+            return;
+        }
+        let type = apikey[0]
+        type = type.type
+        
+        var accesstoken = null
+
+        if(req.headers.authorization){
+            var token = req.headers.authorization.split(' ')
+            if(token[0] == 'Bearer'){
+                accesstoken = token[1]
+            }else{
+                res.json({
+                    'success' : false,
+                    'error' : 'Please use bearer token to log in'
+                })
+            }
+        }
+
+        if(accesstoken){
+            var checktoken = await auth.checkToken(accesstoken)
+            if(checktoken <= 0){
+                res.json({
+                    'success' : false,
+                    'error' : 'Invalid token'
+                })
+            }else{
+                if(type == "adminUser"){
+                    if(req.body.userid){
+                        //save username and password
+                        var userid = req.body.userid
+
+                        let deleteUser = await user.deleteUser(userid)
+                        res.json(
+                            {
+                                'success' : true,
+                                'message' : "User deleted"
+                            }
+                        )
+                    }
+                }else{
+                    res.json(
+                        {
+                            'success' : false,
+                            'message' : "Not enough access rights"
+                        }
+                    )
+                }
+            }
+        }else{
+            res.json(
+                {
+                    'success' : false,
+                    'message' : 'Please log in first'
+                }
+            )
+        }
+    })
+
     app.post('/addUser',async(req, res)=>{
         let auth = new Authetication
         let user = new User
