@@ -229,9 +229,7 @@ const Login = (app) => {
         let user = new User
         
         let apikey = await auth.getAPIKeys(req.headers.apikey)
-        let type = apikey[0]
-        type = type.type
-
+        
         if(apikey.length <= 0){
             res.json({
                 'success' : false,
@@ -239,7 +237,9 @@ const Login = (app) => {
             })
             return;
         }
-
+        let type = apikey[0]
+        type = type.type
+        
         var accesstoken = null
 
         if(req.headers.authorization){
@@ -267,10 +267,10 @@ const Login = (app) => {
                         //save username and password
                         var username = req.body.username
                         var password = req.body.password
-                        var type = req.body.type || 'user'
+                        var usertype = req.body.type
             
                         let user = new User
-                        let saveNewUser = user.saveNewUser(username, password, type)
+                        let saveNewUser = user.saveNewUser(username, password, usertype)
                         saveNewUser.then((result)=>{
                             if(!result){
                                 res.json({
