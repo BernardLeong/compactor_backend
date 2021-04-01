@@ -354,8 +354,8 @@ class User{
     }
 }
 
-// let user = new User
-// let envs = user.testEnvironmentVariables()
-// console.log(envs)
+let user = new User
+let envs = user.testEnvironmentVariables()
+console.log(envs)
 
 module.exports = User
