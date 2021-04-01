@@ -14,8 +14,8 @@ const Authetication = require('./../model/Authetication')
 const env = require('dotenv').config()
 
 const s3 = new AWS.S3({
-    accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
-    secretAccessKey: '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'
+    accessKeyId: process.env.ACCESSKEYID,
+    secretAccessKey: process.env.SECRETACCESSKEY
 })
 
 const Default = (app) => {
