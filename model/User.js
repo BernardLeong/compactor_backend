@@ -258,31 +258,30 @@ class User{
         //if result return true
 
         var dynamoClient = this.livedocClient
-        console.log(dynamoClient)
-        // var params = {
-        //     TableName: 'users', // give it your table name 
-        //     ProjectionExpression: "#uname, #password, #userType, #id",
-        //     FilterExpression: "#uname = :username",
-        //     ExpressionAttributeNames: {
-        //         "#uname": "username",
-        //         "#password": "password",
-        //         "#userType": "userType",
-        //         "#id": "id",
-        //     },
-        //     ExpressionAttributeValues: {
-        //         ":username": username
-        //     }
-        // };
+        var params = {
+            TableName: 'users', // give it your table name 
+            ProjectionExpression: "#uname, #password, #userType, #id",
+            FilterExpression: "#uname = :username",
+            ExpressionAttributeNames: {
+                "#uname": "username",
+                "#password": "password",
+                "#userType": "userType",
+                "#id": "id",
+            },
+            ExpressionAttributeValues: {
+                ":username": username
+            }
+        };
     
-        // return new Promise((resolve, reject)=>{
-        //     dynamoClient.scan(params, (err, data)=> {
-        //         if (err) {
-        //             reject(err)
-        //         } else {
-        //             resolve(data)
-        //         }
-        //     })
-        // });
+        return new Promise((resolve, reject)=>{
+            dynamoClient.scan(params, (err, data)=> {
+                if (err) {
+                    reject(err)
+                } else {
+                    resolve(data)
+                }
+            })
+        });
     }
 
     async saveNewUser(username, password, type){

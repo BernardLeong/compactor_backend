@@ -5,14 +5,15 @@ const util = require('util')
 const CryptoJS = require("crypto-js");
 const awsIot = require('aws-iot-device-sdk');
 const sortObjectsArray = require('sort-objects-array');
+const mailgun = require("mailgun-js");
 const writeFile = util.promisify(fs.writeFile)
 const Alarm = require('./../model/Alarm')
 const Excel = require('./../model/Excel')
 const Compactor = require('./../model/Compactor')
 const User = require('./../model/User')
 const Authetication = require('./../model/Authetication')
-const env = require('dotenv').config()
-
+const api_key = process.env.MAILGUN_API_KEY
+const DOMAIN = process.env.MAILGUN_DOMAIN;
 const s3 = new AWS.S3({
     accessKeyId: process.env.ACCESSKEYID,
     secretAccessKey: process.env.SECRETACCESSKEY
@@ -894,9 +895,7 @@ const AlarmRoutes = (app) =>{
     })
 
     app.post('/sendmail',async(req, res)=>{
-        const mailgun = require("mailgun-js");
-        const DOMAIN = process.env.MAILGUN_DOMAIN;
-        const api_key = process.env.MAILGUN_API_KEY
+        
         const mg = mailgun({apiKey: api_key, domain: DOMAIN});
         var compactor = new Compactor
         var allCompactorAddresses = await compactor.scanAllLiveCoordinates()
