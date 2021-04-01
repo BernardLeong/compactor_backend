@@ -11,12 +11,11 @@ const Excel = require('./../model/Excel')
 const Compactor = require('./../model/Compactor')
 const User = require('./../model/User')
 const Authetication = require('./../model/Authetication')
-const Pdf_controller = require('./../controller/Pdf_controller')
+
 const s3 = new AWS.S3({
     accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
     secretAccessKey: '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'
 })
-
 
 const Default = (app) => {
     app.get('/',async(req, res)=>{
@@ -672,9 +671,6 @@ const AlarmRoutes = (app) =>{
     app.get('/getAlarmReport/all',async(req, res)=>{
         let auth = new Authetication
         let apikey = await auth.getAPIKeys(req.headers.apikey)
-        
-        // var type = apikey[0]
-        // type = type.type
 
         if(apikey.length <= 0){
             res.json({
@@ -953,7 +949,7 @@ const AlarmRoutes = (app) =>{
         // to: ['emily.koh@izeem.com','bernardleongqijie@gmail.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com','seahyw@gmail.com'],
         const data = {
             from: 'iotsupport@izeem.com',
-            to: emailRecipients,
+            to: ['bernardleongqijie@gmail.com'],
             subject: 'One Alarm Trigger Received',
             html: template
         };
