@@ -14,21 +14,77 @@ class Alarm{
                 secretAccessKey: process.env.SECRETACCESSKEY
             }
         ),
+        this.dynamodb = new AWS.DynamoDB(
+            {
+                region: process.env.REGION,
+                accessKeyId: process.env.ACCESSKEYID,
+                secretAccessKey: process.env.SECRETACCESSKEY
+            }
+        ),
         this.compactInfoTable = 'CompactorInfo'
         this.alarmTable = alarmTable
         this.alarmInfoTable = 'AlarmInfo'
         this.lastID = 'lastID'
     }
 
-    async getAlarmReportData(){
-        var tablesAll = await this.readAllTables()
-        tablesAll = tablesAll.TableNames
-        var dateRange = []
-        for(var i=0;i<tablesAll.length;i++){
-            if(tablesAll[i].includes('Alarm_2')){
-                dateRange.push(tablesAll[i])
+    async readAllTables(exclusiveStartTableName=false){
+        let dynamo = this.dynamodb
+        if(exclusiveStartTableName){
+            let params = {
+                "ExclusiveStartTableName" : exclusiveStartTableName
             }
+
+            return new Promise((resolve, reject) => {
+                dynamo.listTables(params , (err, data) => {
+                    if(err) reject(err);
+                    else resolve(data);
+                })
+            })
+        }else{
+            return new Promise((resolve, reject) => {
+                dynamo.listTables({} , (err, data) => {
+                    if(err) reject(err);
+                    else resolve(data);
+                })
+            })
         }
+    }
+
+
+
+    async listtables(includes=false){
+        let tableNames = [];
+        let hasNext = true;
+        let ExclusiveStartTableName = undefined;
+
+        let dynamo = this.dynamodb
+
+        while (hasNext) {
+            let response = await dynamo
+                .listTables({ ExclusiveStartTableName })
+                .promise();
+
+            // Add tableNames returned in this paged response. 
+            tableNames.push(...response.TableNames);
+
+            ExclusiveStartTableName = response.LastEvaluatedTableName;
+            hasNext = !!ExclusiveStartTableName;
+        }
+
+        if(includes){
+            tableNames = tableNames.map((table)=>{
+                if(table.includes(includes)){
+                    return table
+                }
+            })
+        }
+        tableNames = tableNames.filter(Boolean)
+        return tableNames
+    }
+
+    async getAlarmReportData(){
+        var dateRange = this.listtables('Alarm_2021')
+        
         var alarmdata = []
         //get all the data from the date range
         for(var i=0;i<dateRange.length;i++){
@@ -142,16 +198,6 @@ class Alarm{
         return Math.abs(Math.round(diff));
     }
 
-    async readAllTables(){
-        let dynamo = this.liveDynamo
-        return new Promise((resolve, reject) => {
-            dynamo.listTables({} , (err, data) => {
-                if(err) reject(err);
-                else resolve(data);
-            })
-        })
-    }
-
     async getAllClearedAlarm(){
         var tableName = this.alarmTable
         var dynamoClient = this.livedocClient
@@ -199,5 +245,8 @@ class Alarm{
         });
     }
 }
+
+let alarm = new Alarm
+alarm.listtables('Compactor_2021')
 
 module.exports = Alarm

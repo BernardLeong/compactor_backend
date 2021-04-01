@@ -453,10 +453,6 @@ class Compactor{
         return [...new Map(arr.map(item => [item[key], item])).values()]
     }
 
-
-    async getWeightReport(){
-        
-    }
     async scanEquipmentCurrentStatus(){
         //marking
         var tableName = this.equipmentInformation
