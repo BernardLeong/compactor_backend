@@ -234,6 +234,7 @@ class Authetication{
         let user = new User
         return new Promise((resolve, reject)=>{
             resolve('hiii')
+            user.checkUserExists(username)
             // user.checkUserExists(username).then(async(result)=>{
             //     // console.log(result)
             //     if(result.Count > 0){
