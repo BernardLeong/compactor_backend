@@ -1116,13 +1116,13 @@ const AlarmRoutes = (app) =>{
 }
 
 const CompactorRoutes = (app) =>{
-    // app.post('/weightCollectionData',async(req, res)=>{
-    //     var compactor = new Compactor
-    //     var saveWeightCollected = compactor.saveWeightCollected()
-    //     saveWeightCollected.then((result)=>{
-    //         res.json(result)
-    //     })
-    // })
+    app.post('/weightCollectionData',async(req, res)=>{
+        var compactor = new Compactor
+        var saveWeightCollected = compactor.saveWeightCollected()
+        saveWeightCollected.then((result)=>{
+            res.json(result)
+        })
+    })
 
     app.get('/Alarms/esri',async(req, res)=>{
         const sortObjectsArray = require('sort-objects-array');

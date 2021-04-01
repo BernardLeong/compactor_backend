@@ -15,6 +15,13 @@ class Compactor{
                 secretAccessKey: process.env.SECRETACCESSKEY
             }
         ),
+        this.dynamodb = new AWS.DynamoDB(
+            {
+                region: process.env.REGION,
+                accessKeyId: process.env.ACCESSKEYID,
+                secretAccessKey: process.env.SECRETACCESSKEY
+            }
+        ),
         this.addressTable = 'CompactorAddresses'
         this.compactTable = compactTable
         this.compactInfo = 'CompactorInfo'
@@ -328,73 +335,54 @@ class Compactor{
         var yymmdd = dateObj.split('/')
         yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
         var tableName = `Compactor_${yymmdd}`
-        var dynamodb = this.livedocClient
-        var response = await dynamodb.listTables(params).promise();
-        response = response.TableNames
-        var tableArr = []
-        for(var i=0;i<response.length;i++){
-            var resp = response[i]
-            if(resp == tableName){
-                tableArr.push(response[i])
+        
+        for(var index=0;index<equipmentIDs.length;index++){
+            var equipmentID = equipmentIDs[index]
+            var weightEvents = await this.getEquipmentEvents(equipmentID,tableName)
+    
+            if(weightEvents.length <= 0){
+                continue;
             }
+            //update record of weight events 
+            let parmasHeader = await this.buildParamsObj(equipmentID,tableName)
+            params.push(parmasHeader)
         }
 
-        if(tableArr.length > 0){
-            for(var index=0;index<equipmentIDs.length;index++){
-                var equipmentID = equipmentIDs[index]
-                var weightEvents = await this.getEquipmentEvents(equipmentID,tableName)
-        
-                if(weightEvents.length <= 0){
-                    continue;
+        params = params.filter(Boolean);
+            var insertParams = {
+                RequestItems: {
+                    "EquipmentWeightCollection": params
                 }
-                //update record of weight events 
-                let parmasHeader = await this.buildParamsObj(equipmentID,tableName)
-                params.push(parmasHeader)
             }
     
-            params = params.filter(Boolean);
-                var insertParams = {
-                    RequestItems: {
-                        "EquipmentWeightCollection": params
-                    }
+            var dynamoDB = new AWS.DynamoDB(
+                {
+                    region: 'ap-southeast-1',
+                    accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
+                    secretAccessKey: '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'
                 }
-        
-                var dynamoDB = new AWS.DynamoDB(
-                    {
-                        region: 'ap-southeast-1',
-                        accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
-                        secretAccessKey: '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'
-                    }
-                );
+            );
 
-                if(params.length <= 0){
-                    return new Promise((resolve, reject)=>{
-                        resolve({success: false, message: 'Nothing to insert, no new events'})
-                    })
-                }else{
-                    return new Promise((resolve, reject)=>{
-                        dynamoDB.batchWriteItem(insertParams, function(err, data) {
-                            if (err) {
-                                resolve({
-                                    success: false,
-                                    message: err.message
-                                });
-                            } else {
-                                resolve({
-                                    success: true
-                                });
-                            }
-                        });
-                    })
-                }
-        }else{
-            return new Promise((resolve, reject)=>{
-               resolve({
-                    success: false,
-                    message: "Table not generated yet"
+            if(params.length <= 0){
+                return new Promise((resolve, reject)=>{
+                    resolve({success: false, message: 'Nothing to insert, no new events'})
                 })
-            })
-        }
+            }else{
+                return new Promise((resolve, reject)=>{
+                    dynamoDB.batchWriteItem(insertParams, function(err, data) {
+                        if (err) {
+                            resolve({
+                                success: false,
+                                message: err.message
+                            });
+                        } else {
+                            resolve({
+                                success: true
+                            });
+                        }
+                    });
+                })
+            }
     }
 
     async scanAllLiveCoordinates(){
