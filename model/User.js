@@ -1,21 +1,14 @@
 const CryptoJS = require("crypto-js");
 const AWS = require("aws-sdk");
+const env = require('dotenv').config()
 
 class User{
     constructor(){
-        this.key = 'mwPWxZ4caYNzENpCBpWzMYxy4dMetJ743qNebkJh',
-        this.docClient = new AWS.DynamoDB.DocumentClient(
-            {
-                region: 'us-east-2',
-                accessKeyId: 'AKIA47VGGTAQQJKET2X7',
-                secretAccessKey: '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'
-            }
-        ),
         this.livedocClient = new AWS.DynamoDB.DocumentClient(
             {
-                region: 'ap-southeast-1',
-                accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
-                secretAccessKey: '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'
+                region: process.env.REGION,
+                accessKeyId: process.env.ACCESSKEYID,
+                secretAccessKey: process.env.SECRETACCESSKEY
             }
         ),
         this.userTable = 'user',
@@ -24,6 +17,16 @@ class User{
         this.lastIDtable = 'lastID'
         this.accesscontroltable = 'accesscontroltable'
     }
+
+    // testEnvironmentVariables(){
+    //     let obj = {
+    //         region : process.env.REGION,
+    //         accessKeyId : process.env.ACCESSKEYID,
+    //         secretAccessKey : process.env.SECRETACCESSKEY,
+    //     }
+
+    //     return obj
+    // }
 
     async deleteUser(userid){
         var livedocClient = this.livedocClient
@@ -350,5 +353,9 @@ class User{
         return decryptedPW
     }
 }
+
+// let user = new User
+// let envs = user.testEnvironmentVariables()
+// console.log(envs)
 
 module.exports = User

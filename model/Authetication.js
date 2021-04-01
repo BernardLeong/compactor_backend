@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const CryptoJS = require("crypto-js");
 const AWS = require("aws-sdk");
 const User = require("./User")
+const env = require('dotenv').config()
 
 class Authetication{
 
@@ -14,11 +15,11 @@ class Authetication{
         this.apikeyTable = 'apiKeys',
         this.livedocClient = new AWS.DynamoDB.DocumentClient(
             {
-                region: 'ap-southeast-1',
-                accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
-                secretAccessKey: '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'
+                region: process.env.REGION,
+                accessKeyId: process.env.ACCESSKEYID,
+                secretAccessKey: process.env.SECRETACCESSKEY
             }
-        );
+        )
     }
 
     async getAPIKeys(apikey){

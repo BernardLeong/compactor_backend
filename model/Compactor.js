@@ -2,33 +2,19 @@ const AWS = require("aws-sdk");
 const moment = require('moment')
 const Alarm = require('./Alarm')
 const sortObjectsArray = require('sort-objects-array');
+const env = require('dotenv').config()
 
 class Compactor{
     //if compactor is on, a ping is sent(from what i understand), so create record in dynamoDB
     constructor(compactTable){
-        this.docClient = new AWS.DynamoDB.DocumentClient(
-            {
-                region: 'us-east-2',
-                accessKeyId: 'AKIA47VGGTAQQJKET2X7',
-                secretAccessKey: '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'
-            }
-        );
-
+        
         this.livedocClient = new AWS.DynamoDB.DocumentClient(
             {
-                region: 'ap-southeast-1',
-                accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
-                secretAccessKey: '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'
+                region: process.env.REGION,
+                accessKeyId: process.env.ACCESSKEYID,
+                secretAccessKey: process.env.SECRETACCESSKEY
             }
-        );
-
-        this.liveDyDb = new AWS.DynamoDB(
-            {
-                region: 'ap-southeast-1',
-                accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
-                secretAccessKey: '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'
-            }
-        );
+        ),
         this.addressTable = 'CompactorAddresses'
         this.compactTable = compactTable
         this.compactInfo = 'CompactorInfo'
@@ -62,7 +48,7 @@ class Compactor{
                 Select: "ALL_ATTRIBUTES"
             };
         
-            var liveDynamo = this.liveDyDb
+            var liveDynamo = this.livedocClient
             return new Promise((resolve, reject)=>{
                 liveDynamo.scan(params, (err, data)=>{
                     if (err) {
@@ -136,7 +122,7 @@ class Compactor{
             return
         }
 
-        var liveDynamo = this.liveDyDb
+        var liveDynamo = this.livedocClient
         weightEvents = sortObjectsArray(weightEvents, 'ts')
     
         var lastIndex = weightEvents.length -1
@@ -342,7 +328,7 @@ class Compactor{
         var yymmdd = dateObj.split('/')
         yymmdd = `${yymmdd[2]}${yymmdd[0]}${yymmdd[1]}`
         var tableName = `Compactor_${yymmdd}`
-        var dynamodb = this.liveDyDb
+        var dynamodb = this.livedocClient
         var response = await dynamodb.listTables(params).promise();
         response = response.TableNames
         var tableArr = []

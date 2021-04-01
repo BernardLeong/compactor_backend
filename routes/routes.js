@@ -11,6 +11,7 @@ const Excel = require('./../model/Excel')
 const Compactor = require('./../model/Compactor')
 const User = require('./../model/User')
 const Authetication = require('./../model/Authetication')
+const env = require('dotenv').config()
 
 const s3 = new AWS.S3({
     accessKeyId: 'AKIAWUC2TK6CHAVW5T6V',
