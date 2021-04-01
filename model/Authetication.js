@@ -233,43 +233,44 @@ class Authetication{
     async autheticate(username, password){
         let user = new User
         return new Promise((resolve, reject)=>{
-            user.checkUserExists(username).then(async(result)=>{
-                // console.log(result)
-                if(result.Count > 0){
-                    var bytes  = CryptoJS.AES.decrypt(result.Items[0].password, this.encrypytkey);
-                    var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-                    if(username === result.Items[0].username && password === decryptedData){
-                        var token = this.signToken(username, password)
-                        let userDetails = result.Items[0]
-            //             //save token in accesscontrol table
-                        var userid = userDetails.id
-                        this.insertAccessControlToken(userid, token)
-                            resolve(
-                                {
-                                    "success" : true,
-                                    "token" : token,
-                                    "usertype" : userDetails.userType
-                                }
-                            )
-                    }else{
-                            reject(
-                                {
-                                    "success" : false,
-                                    "error" : "Wrong password or user"
-                                }
-                            )
-                    }
-                }else{
-                    resolve(
-                        {
-                            "success" : false,
-                            "error" : "Wrong password or user"
-                        }
-                    )
-                }
-            }).catch((err)=>{
-                console.log(err)
-            })
+            resolve('hiii')
+            // user.checkUserExists(username).then(async(result)=>{
+            //     // console.log(result)
+            //     if(result.Count > 0){
+            //         var bytes  = CryptoJS.AES.decrypt(result.Items[0].password, this.encrypytkey);
+            //         var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+            //         if(username === result.Items[0].username && password === decryptedData){
+            //             var token = this.signToken(username, password)
+            //             let userDetails = result.Items[0]
+            // //             //save token in accesscontrol table
+            //             var userid = userDetails.id
+            //             this.insertAccessControlToken(userid, token)
+            //                 resolve(
+            //                     {
+            //                         "success" : true,
+            //                         "token" : token,
+            //                         "usertype" : userDetails.userType
+            //                     }
+            //                 )
+            //         }else{
+            //                 reject(
+            //                     {
+            //                         "success" : false,
+            //                         "error" : "Wrong password or user"
+            //                     }
+            //                 )
+            //         }
+            //     }else{
+            //         resolve(
+            //             {
+            //                 "success" : false,
+            //                 "error" : "Wrong password or user"
+            //             }
+            //         )
+            //     }
+            // }).catch((err)=>{
+            //     console.log(err)
+            // })
         })
     }
 }
