@@ -949,7 +949,7 @@ const AlarmRoutes = (app) =>{
         // to: ['emily.koh@izeem.com','bernardleongqijie@gmail.com','pohkiat@ze.com.sg','marcuschen@ze.com.sg','durai@ze.com.sg','shawnlee@ze.com.sg','thomas@ze.com.sg','jeromeang@ze.com.sg','geraldina.koh@sembcorp.com','seahyw@gmail.com'],
         const data = {
             from: 'iotsupport@izeem.com',
-            to: ['bernardleongqijie@gmail.com'],
+            to: emailRecipients,
             subject: 'One Alarm Trigger Received',
             html: template
         };
